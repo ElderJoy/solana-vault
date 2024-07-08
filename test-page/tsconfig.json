@@ -1,5 +1,4 @@
 {
-    "extends": "../../../tsconfig.root.json",
     "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "package.json"],
     "compilerOptions": {
         "outDir": "lib",
@@ -16,7 +15,8 @@
         "resolveJsonModule": true,
         "isolatedModules": true,
         "jsx": "preserve",
-        "incremental": true
+        "incremental": true,
+        "composite": true
     },
     "exclude": ["node_modules"]
 }
