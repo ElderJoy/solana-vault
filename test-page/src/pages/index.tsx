@@ -3,7 +3,8 @@ import type { NextPage } from 'next';
 import dynamic from 'next/dynamic';
 import React from 'react';
 import { useAutoConnect } from '../components/wallet/AutoConnectProvider';
-import RegisterUserAccountBox from '../components/withdraw/RegisterUserAccount';
+import { RegisterUserAccountBox } from '../components/withdraw/RegisterUserAccount';
+import { CommonProps, getCeFiBaseURL } from '../components/common';
 
 const MaterialUIWalletMultiButtonDynamic = dynamic(
     async () => (await import('@solana/wallet-adapter-material-ui')).WalletMultiButton,
@@ -43,6 +44,9 @@ const SignTransactionDynamic = dynamic(
 
 const Index: NextPage = () => {
     const { autoConnect, setAutoConnect } = useAutoConnect();
+    const commonProps: CommonProps = {
+        cefiBaseURL: getCeFiBaseURL(),
+    };
 
     return (
         <>
@@ -100,7 +104,7 @@ const Index: NextPage = () => {
                     </TableRow>
                     <TableRow>
                         <TableCell>
-                            <RegisterUserAccountBox />
+                            <RegisterUserAccountBox {...commonProps} />
                         </TableCell>
                         <TableCell></TableCell>
                         <TableCell></TableCell>

@@ -1,19 +1,11 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import Box from '@mui/material/Box';
+import { CommonProps } from '../common';
 
-export default function RegisterUserAccountBox() {
+export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
     return (
-        <Box
-            height={200}
-            width={200}
-            my={4}
-            display="flex"
-            alignItems="center"
-            gap={4}
-            p={2}
-            sx={{ border: '2px solid grey' }}
-        >
-            This Box uses MUI System props for quick customization.
+        <Box component="section" p={2} sx={{ border: '2px solid grey', borderRadius: 5 }}>
+            CeFi Base URL: {props.cefiBaseURL}
         </Box>
     );
-}
+};
