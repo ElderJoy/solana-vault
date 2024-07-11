@@ -4,7 +4,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import bs58 from 'bs58';
 import type { FC } from 'react';
 import React, { useCallback } from 'react';
-import { useNotify } from './notify';
+import { useNotify } from '../notify';
 
 export const SignMessage: FC = () => {
     const { publicKey, signMessage } = useWallet();
