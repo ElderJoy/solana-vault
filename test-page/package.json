@@ -30,7 +30,8 @@
         "dev": "NODE_OPTIONS='--inspect' next dev",
         "start": "next start",
         "lint": "prettier --check 'src/{*,**/*}.{ts,tsx,js,jsx,json}' && eslint && next lint",
-        "export": "next export"
+        "export": "next export",
+        "cefi_mock": "tsx cefi_mock/cefi_mock.ts"
     },
     "dependencies": {
         "@ant-design/icons": "^4.8.0",
@@ -54,13 +55,16 @@
     },
     "devDependencies": {
         "@types/bs58": "^4.0.1",
+        "@types/express": "^4.17.21",
         "@types/node-fetch": "^2.6.4",
         "@types/react": "^18.2.13",
         "@types/react-dom": "^18.2.6",
         "eslint": "8.22.0",
         "eslint-config-next": "^12.3.4",
+        "express": "^4.19.2",
         "prettier": "^2.8.8",
         "shx": "^0.3.4",
+        "tsx": "^4.16.2",
         "typescript": "~5.5.3"
     }
 }
