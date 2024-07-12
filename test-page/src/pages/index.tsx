@@ -5,6 +5,7 @@ import React from 'react';
 import { useAutoConnect } from '../components/wallet/AutoConnectProvider';
 import { RegisterUserAccountBox } from '../components/withdraw/RegisterUserAccount';
 import { CommonProps, getCeFiBaseURL } from '../components/common';
+import { CeFiBaseUrlView } from '../components/withdraw/CeFiBaseUrl';
 
 const MaterialUIWalletMultiButtonDynamic = dynamic(
     async () => (await import('@solana/wallet-adapter-material-ui')).WalletMultiButton,
@@ -70,7 +71,10 @@ const Index: NextPage = () => {
                                     label="AutoConnect"
                                 />
                             </Tooltip>
-                        </TableCell>{' '}
+                        </TableCell>
+                        <TableCell>
+                            <CeFiBaseUrlView {...commonProps} />
+                        </TableCell>
                     </TableRow>
                 </TableBody>
             </Table>

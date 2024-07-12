@@ -55,10 +55,12 @@
     },
     "devDependencies": {
         "@types/bs58": "^4.0.1",
+        "@types/cors": "^2.8.17",
         "@types/express": "^4.17.21",
         "@types/node-fetch": "^2.6.4",
         "@types/react": "^18.2.13",
         "@types/react-dom": "^18.2.6",
+        "cors": "^2.8.5",
         "eslint": "8.22.0",
         "eslint-config-next": "^12.3.4",
         "express": "^4.19.2",

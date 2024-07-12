@@ -13,5 +13,5 @@ export const getChainId = (chainId: ChainId): ChainId => {
 };
 
 export const getCeFiBaseURL = (): string => {
-    return process.env.CEFI_BASE_UI ? process.env.CEFI_BASE_UI : 'localhost:3001';
+    return process.env.CEFI_BASE_UI ? process.env.CEFI_BASE_UI : 'http://localhost:3001';
 };
