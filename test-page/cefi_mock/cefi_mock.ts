@@ -3,6 +3,8 @@ import cors from 'cors';
 
 const app = express();
 const port = process.env.PORT || 3001; // Use a different port from Next.js
+let registration_nonce = 119747133480;
+let withdraw_nonce = 14001212121234;
 
 app.use(cors());
 
@@ -18,9 +20,9 @@ app.get('/v1/registration_nonce', (req, res) => {
     res.json({
         "success": true,
         "data": {
-            "registration_nonce": "119747133480"
+            "registration_nonce": registration_nonce++
         },
-        "timestamp": 1689074684188
+        "timestamp": Date.now()
     });
 });
 
@@ -28,8 +30,8 @@ app.get('/v1/withdraw_nonce', (req, res) => {
     res.json({
         "success": true,
         "data": {
-            "withdraw_nonce": 14001212121234
+            "withdraw_nonce": withdraw_nonce++
         },
-        "timestamp": 1685673968302
+        "timestamp": Date.now()
     });
 });

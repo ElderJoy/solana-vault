@@ -8,6 +8,12 @@ export enum ChainId {
     Devnet = 902902902,
 }
 
+export enum BrockerId {
+    woofi_dex = 'woofi_dex',
+    orderly = 'orderly',
+    woofi_pro = 'woofi_pro',
+}
+
 export const getChainId = (chainId: ChainId): ChainId => {
     return chainId;
 };
