@@ -1,7 +1,8 @@
 import { useEffect, useState, type FC } from 'react';
-import { CommonProps } from '../common';
-import { CircularProgress, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { brockerIds, chainIds, CommonProps } from '../common';
+import { Button, CircularProgress, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import BoxWithTitle from '../BoxWithTitle';
+import { useNotify } from '../notify';
 
 type RegistrationNonceData = {
     success: boolean;
@@ -18,14 +19,12 @@ interface AccountRegistrationMessage {
     registrationNonce: BigInt;
 }
 
-const brokerIdOptions = ['Broker 1', 'Broker 2', 'Broker 3'];
-const chainIdOptions = ['Chain 1', 'Chain 2', 'Chain 3'];
-
 export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
     const [registration_nonce, setRegistrationNonce] = useState<string | undefined>(undefined);
     const [error, setError] = useState<string | undefined>(undefined);
     const [selectedBrokerId, setSelectedBrokerId] = useState<string>();
     const [selectedChainId, setSelectedChainId] = useState<string>();
+    const notify = useNotify();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -65,6 +64,92 @@ export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
         fetchData();
     }, []); // Empty dependency array means this effect runs once on mount
 
+    const getRegistrationNonce = async () => {
+        try {
+            const response = await fetch(props.cefiBaseURL + '/v1/registration_nonce', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.status !== 200) {
+                notify('error', 'Network response was not ok');
+                return;
+            }
+
+            const registrationNonceData: RegistrationNonceData = await response.json();
+
+            if (!registrationNonceData.success) {
+                notify('error', 'Request was not successful');
+                return;
+            }
+
+            return registrationNonceData.data.registration_nonce;
+        } catch (error) {
+            console.log(error);
+            if (error instanceof Error) {
+                setError(error.message);
+            } else {
+                // Handle cases where the error is not an instance of Error
+                // For example, you might want to set a generic error message
+                setError('An unexpected error occurred');
+            }
+        }
+    };
+
+    const registerAccount = async () => {
+        if (!registration_nonce) {
+            notify('error', 'Registration nonce not available');
+            return;
+        }
+
+        if (!selectedBrokerId || !selectedChainId) {
+            notify('error', 'Broker ID and Chain ID must be selected');
+            return;
+        }
+
+        const accountRegistrationMessage: AccountRegistrationMessage = {
+            brokerId: selectedBrokerId,
+            chainId: BigInt(selectedChainId),
+            timestamp: BigInt(Date.now()),
+            registrationNonce: BigInt(registration_nonce),
+        };
+
+        try {
+            const response = await fetch(props.cefiBaseURL + '/v1/register_account', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(accountRegistrationMessage),
+            });
+
+            console.log('Response from external server:', response);
+
+            if (response.status !== 200) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error('Request was not successful');
+            }
+
+            console.log('Account registration successful');
+        } catch (error) {
+            console.log(error);
+            if (error instanceof Error) {
+                setError(error.message);
+            } else {
+                // Handle cases where the error is not an instance of Error
+                // For example, you might want to set a generic error message
+                setError('An unexpected error occurred');
+            }
+        }
+    };
+
     return (
         <BoxWithTitle title="User Registration">
             {error && <p>Error: {error}</p>}
@@ -77,7 +162,7 @@ export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
                             label="Broker ID"
                             onChange={(event) => setSelectedBrokerId(event.target.value)}
                         >
-                            {brokerIdOptions.map((option) => (
+                            {brockerIds.map((option) => (
                                 <MenuItem key={option} value={option}>
                                     {option}
                                 </MenuItem>
@@ -91,13 +176,16 @@ export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
                             label="Chain ID"
                             onChange={(event) => setSelectedChainId(event.target.value)}
                         >
-                            {chainIdOptions.map((option) => (
+                            {chainIds.map((option) => (
                                 <MenuItem key={option} value={option}>
                                     {option}
                                 </MenuItem>
                             ))}
                         </Select>
                     </FormControl>
+                    <Button variant="contained" color="secondary" onClick={registerAccount}>
+                        Register Account
+                    </Button>
                 </>
             ) : (
                 <CircularProgress />
