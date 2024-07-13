@@ -21,7 +21,6 @@ interface AccountRegistrationMessage {
 
 export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
     const [registration_nonce, setRegistrationNonce] = useState<string | undefined>(undefined);
-    const [error, setError] = useState<string | undefined>(undefined);
     const [selectedBrokerId, setSelectedBrokerId] = useState<string>();
     const [selectedChainId, setSelectedChainId] = useState<string>();
     const notify = useNotify();
@@ -52,11 +51,11 @@ export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
             } catch (error) {
                 console.log(error);
                 if (error instanceof Error) {
-                    setError(error.message);
+                    notify('error', error.message);
                 } else {
                     // Handle cases where the error is not an instance of Error
                     // For example, you might want to set a generic error message
-                    setError('An unexpected error occurred');
+                    notify('error', 'An unexpected error occurred');
                 }
             }
         };
@@ -74,49 +73,58 @@ export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
             });
 
             if (response.status !== 200) {
-                notify('error', 'Network response was not ok');
-                return;
+                throw new Error('Network response was not ok');
             }
 
             const registrationNonceData: RegistrationNonceData = await response.json();
 
             if (!registrationNonceData.success) {
-                notify('error', 'Request was not successful');
-                return;
+                throw new Error('Request was not successful');
             }
 
             return registrationNonceData.data.registration_nonce;
         } catch (error) {
             console.log(error);
             if (error instanceof Error) {
-                setError(error.message);
+                throw new Error(error.message);
             } else {
                 // Handle cases where the error is not an instance of Error
                 // For example, you might want to set a generic error message
-                setError('An unexpected error occurred');
+                throw new Error('An unexpected error occurred');
+
             }
         }
     };
 
     const registerAccount = async () => {
-        if (!registration_nonce) {
-            notify('error', 'Registration nonce not available');
-            return;
-        }
-
         if (!selectedBrokerId || !selectedChainId) {
             notify('error', 'Broker ID and Chain ID must be selected');
             return;
         }
 
-        const accountRegistrationMessage: AccountRegistrationMessage = {
-            brokerId: selectedBrokerId,
-            chainId: BigInt(selectedChainId),
-            timestamp: BigInt(Date.now()),
-            registrationNonce: BigInt(registration_nonce),
-        };
-
         try {
+            const registrationNonce = await getRegistrationNonce();
+
+
+            const accountRegistrationMessage: AccountRegistrationMessage = {
+                brokerId: selectedBrokerId,
+                chainId: BigInt(selectedChainId),
+                timestamp: BigInt(Date.now()),
+                registrationNonce: BigInt(registrationNonce),
+            };
+
+            console.log('Account registration message:', accountRegistrationMessage);
+
+            // bytes32 msgToSign = keccak256(
+            //     abi.encode(
+            //         keccak256(abi.encodePacked(data.brokerId)),
+            //         chainId,
+            //         timestamp,
+            //         registrationNonce
+            //     )
+            // )
+
+            const msgToSign = keccak256(
             const response = await fetch(props.cefiBaseURL + '/v1/register_account', {
                 method: 'POST',
                 headers: {
@@ -141,55 +149,48 @@ export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
         } catch (error) {
             console.log(error);
             if (error instanceof Error) {
-                setError(error.message);
+                notify('error', error.message);
             } else {
                 // Handle cases where the error is not an instance of Error
                 // For example, you might want to set a generic error message
-                setError('An unexpected error occurred');
+                notify('error', 'An unexpected error occurred');
             }
         }
     };
 
     return (
         <BoxWithTitle title="User Registration">
-            {error && <p>Error: {error}</p>}
-            {registration_nonce ? (
-                <>
-                    <FormControl fullWidth margin="normal" variant="standard">
-                        <InputLabel>Broker ID</InputLabel>
-                        <Select
-                            value={selectedBrokerId}
-                            label="Broker ID"
-                            onChange={(event) => setSelectedBrokerId(event.target.value)}
-                        >
-                            {brockerIds.map((option) => (
-                                <MenuItem key={option} value={option}>
-                                    {option}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <FormControl fullWidth margin="normal" variant="standard">
-                        <InputLabel>Chain ID</InputLabel>
-                        <Select
-                            value={selectedChainId}
-                            label="Chain ID"
-                            onChange={(event) => setSelectedChainId(event.target.value)}
-                        >
-                            {chainIds.map((option) => (
-                                <MenuItem key={option} value={option}>
-                                    {option}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <Button variant="contained" color="secondary" onClick={registerAccount}>
-                        Register Account
-                    </Button>
-                </>
-            ) : (
-                <CircularProgress />
-            )}
+            <FormControl fullWidth margin="normal" variant="standard">
+                <InputLabel>Broker ID</InputLabel>
+                <Select
+                    value={selectedBrokerId}
+                    label="Broker ID"
+                    onChange={(event) => setSelectedBrokerId(event.target.value)}
+                >
+                    {brockerIds.map((option) => (
+                        <MenuItem key={option} value={option}>
+                            {option}
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+            <FormControl fullWidth margin="normal" variant="standard">
+                <InputLabel>Chain ID</InputLabel>
+                <Select
+                    value={selectedChainId}
+                    label="Chain ID"
+                    onChange={(event) => setSelectedChainId(event.target.value)}
+                >
+                    {chainIds.map((option) => (
+                        <MenuItem key={option} value={option}>
+                            {option}
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+            <Button variant="contained" color="secondary" onClick={registerAccount}>
+                Register Account
+            </Button>
         </BoxWithTitle>
     );
 };
