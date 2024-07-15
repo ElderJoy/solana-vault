@@ -8,6 +8,18 @@
 yarn
 ```
 
+### Prepare the environment:
+
+```bash
+cp .env.example .env
+```
+
+### Rum mock CeFi server in separate terminal:
+
+```bash
+yarn cefi_mock
+```
+
 ### Run the development server (for local development):
 
 ```bash
