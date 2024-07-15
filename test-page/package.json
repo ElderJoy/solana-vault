@@ -65,6 +65,7 @@
         "eslint": "8.22.0",
         "eslint-config-next": "^12.3.4",
         "ethereum-cryptography": "^2.2.1",
+        "ethers": "^6.13.1",
         "express": "^4.19.2",
         "prettier": "^2.8.8",
         "shx": "^0.3.4",

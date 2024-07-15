@@ -1,8 +1,13 @@
-import { useEffect, useState, type FC } from 'react';
+import { useEffect, useState, type FC, useCallback } from 'react';
 import { brockerIds, chainIds, CommonProps } from '../common';
 import { Button, CircularProgress, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import BoxWithTitle from '../BoxWithTitle';
 import { useNotify } from '../notify';
+import { keccak256 } from 'ethereum-cryptography/keccak';
+import { hexToBytes, bytesToHex } from 'ethereum-cryptography/utils';
+import { defaultAbiCoder } from '@ethersproject/abi';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { encodeBase58 } from 'ethers';
 
 type RegistrationNonceData = {
     success: boolean;
@@ -13,139 +18,120 @@ type RegistrationNonceData = {
 };
 
 interface AccountRegistrationMessage {
-    brokerId: string;
-    chainId: BigInt;
-    timestamp: BigInt;
-    registrationNonce: BigInt;
+    message: {
+        brokerId: string;
+        chainId: BigInt;
+        timestamp: BigInt;
+        registrationNonce: BigInt;
+    };
+    signature: string;
+    userAddress: string;
+}
+
+function replacer(key: string, value: any) {
+    if (typeof value === 'bigint') {
+        return value.toString();
+    } else {
+        return value;
+    }
 }
 
 export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
-    const [registration_nonce, setRegistrationNonce] = useState<string | undefined>(undefined);
     const [selectedBrokerId, setSelectedBrokerId] = useState<string>();
-    const [selectedChainId, setSelectedChainId] = useState<string>();
+    const [selectedChainId, setSelectedChainId] = useState<number>();
     const notify = useNotify();
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await fetch(props.cefiBaseURL + '/v1/registration_nonce', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-                console.log('Response from external server:', response);
-
-                if (response.status !== 200) {
-                    throw new Error('Network response was not ok');
-                }
-
-                const registrationNonceData: RegistrationNonceData = await response.json();
-
-                if (!registrationNonceData.success) {
-                    throw new Error('Request was not successful');
-                }
-
-                const registration_nonce = registrationNonceData.data.registration_nonce;
-                setRegistrationNonce(registration_nonce);
-            } catch (error) {
-                console.log(error);
-                if (error instanceof Error) {
-                    notify('error', error.message);
-                } else {
-                    // Handle cases where the error is not an instance of Error
-                    // For example, you might want to set a generic error message
-                    notify('error', 'An unexpected error occurred');
-                }
-            }
-        };
-
-        fetchData();
-    }, []); // Empty dependency array means this effect runs once on mount
+    const { publicKey, signMessage, signTransaction } = useWallet();
 
     const getRegistrationNonce = async () => {
-        try {
-            const response = await fetch(props.cefiBaseURL + '/v1/registration_nonce', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
+        const response = await fetch(props.cefiBaseURL + '/v1/registration_nonce', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
 
-            if (response.status !== 200) {
-                throw new Error('Network response was not ok');
-            }
+        if (response.status !== 200) {
+            throw new Error('Network response was not ok');
+        }
 
-            const registrationNonceData: RegistrationNonceData = await response.json();
+        const registrationNonceData: RegistrationNonceData = await response.json();
 
-            if (!registrationNonceData.success) {
-                throw new Error('Request was not successful');
-            }
+        if (!registrationNonceData.success) {
+            throw new Error('Request was not successful');
+        }
 
-            return registrationNonceData.data.registration_nonce;
-        } catch (error) {
-            console.log(error);
-            if (error instanceof Error) {
-                throw new Error(error.message);
-            } else {
-                // Handle cases where the error is not an instance of Error
-                // For example, you might want to set a generic error message
-                throw new Error('An unexpected error occurred');
+        return registrationNonceData.data.registration_nonce;
+    };
 
-            }
+    const doRegisterAccount = async (accountRegistrationMessage: AccountRegistrationMessage) => {
+        const requestBody = JSON.stringify(accountRegistrationMessage, replacer);
+        console.log('Request body:', requestBody);
+        const response = await fetch(props.cefiBaseURL + '/v1/register_account_solana', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: requestBody,
+        });
+
+        console.log('Response from external server:', response);
+
+        if (response.status !== 200) {
+            throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+        console.log('Data from external server:', data);
+
+        if (!data.success) {
+            throw new Error('Request was not successful');
         }
     };
 
     const registerAccount = async () => {
-        if (!selectedBrokerId || !selectedChainId) {
-            notify('error', 'Broker ID and Chain ID must be selected');
-            return;
-        }
-
         try {
+            if (!selectedBrokerId || !selectedChainId) throw new Error('Broker ID and Chain ID must be selected');
+            if (!publicKey) throw new Error('Wallet not connected!');
+            if (!signMessage) throw new Error('Wallet does not support message signing!');
+            if (!signTransaction) throw new Error('Wallet does not support transaction signing!');
+
             const registrationNonce = await getRegistrationNonce();
 
+            const brokerIdHash = keccak256(hexToBytes(defaultAbiCoder.encode(['string'], [selectedBrokerId])));
+            console.log('Broker ID hash:', bytesToHex(brokerIdHash));
+            const msgToSign = keccak256(
+                hexToBytes(
+                    defaultAbiCoder.encode(
+                        ['bytes32', 'uint256', 'uint256', 'uint256'],
+                        [brokerIdHash, selectedChainId, BigInt(Date.now()), BigInt(registrationNonce)]
+                    )
+                )
+            );
+
+            const msgToSignHex = bytesToHex(msgToSign);
+            const msgToSignTextEncoded: Uint8Array = new TextEncoder().encode(msgToSignHex);
+            console.log('Message to sign bytes:', msgToSign);
+            console.log('Message to sign hex string:', bytesToHex(msgToSign));
+            console.log('Message to sign text encoded:', msgToSignTextEncoded);
+
+            const signature = '0x' + bytesToHex(await signMessage(msgToSignTextEncoded));
+            console.log('Signature:', signature);
 
             const accountRegistrationMessage: AccountRegistrationMessage = {
-                brokerId: selectedBrokerId,
-                chainId: BigInt(selectedChainId),
-                timestamp: BigInt(Date.now()),
-                registrationNonce: BigInt(registrationNonce),
+                message: {
+                    brokerId: selectedBrokerId,
+                    chainId: BigInt(selectedChainId),
+                    timestamp: BigInt(Date.now()),
+                    registrationNonce: BigInt(registrationNonce),
+                },
+                signature: signature,
+                userAddress: encodeBase58(publicKey.toBytes()),
             };
 
             console.log('Account registration message:', accountRegistrationMessage);
+            await doRegisterAccount(accountRegistrationMessage);
 
-            // bytes32 msgToSign = keccak256(
-            //     abi.encode(
-            //         keccak256(abi.encodePacked(data.brokerId)),
-            //         chainId,
-            //         timestamp,
-            //         registrationNonce
-            //     )
-            // )
-
-            const msgToSign = keccak256(
-            const response = await fetch(props.cefiBaseURL + '/v1/register_account', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(accountRegistrationMessage),
-            });
-
-            console.log('Response from external server:', response);
-
-            if (response.status !== 200) {
-                throw new Error('Network response was not ok');
-            }
-
-            const data = await response.json();
-
-            if (!data.success) {
-                throw new Error('Request was not successful');
-            }
-
-            console.log('Account registration successful');
+            notify('success', 'Account registration successful');
         } catch (error) {
             console.log(error);
             if (error instanceof Error) {
@@ -157,6 +143,10 @@ export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
             }
         }
     };
+
+    const onClick = useCallback(async () => {
+        await registerAccount();
+    }, []);
 
     return (
         <BoxWithTitle title="User Registration">
@@ -179,7 +169,7 @@ export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
                 <Select
                     value={selectedChainId}
                     label="Chain ID"
-                    onChange={(event) => setSelectedChainId(event.target.value)}
+                    onChange={(event) => setSelectedChainId(event.target.value as number)}
                 >
                     {chainIds.map((option) => (
                         <MenuItem key={option} value={option}>
@@ -188,7 +178,12 @@ export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
                     ))}
                 </Select>
             </FormControl>
-            <Button variant="contained" color="secondary" onClick={registerAccount}>
+            <Button
+                variant="contained"
+                color="secondary"
+                onClick={registerAccount}
+                disabled={!publicKey || !signTransaction || !signMessage || !selectedBrokerId || !selectedChainId}
+            >
                 Register Account
             </Button>
         </BoxWithTitle>
