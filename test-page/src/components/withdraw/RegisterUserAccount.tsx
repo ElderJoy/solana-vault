@@ -1,13 +1,13 @@
-import { useEffect, useState, type FC, useCallback } from 'react';
+import { useState, type FC, useCallback } from 'react';
 import { brockerIds, chainIds, CommonProps } from '../common';
-import { Button, CircularProgress, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { Button, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import BoxWithTitle from '../BoxWithTitle';
 import { useNotify } from '../notify';
 import { keccak256 } from 'ethereum-cryptography/keccak';
 import { hexToBytes, bytesToHex } from 'ethereum-cryptography/utils';
 import { defaultAbiCoder } from '@ethersproject/abi';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { encodeBase58 } from 'ethers';
+import { encodeBase58, solidityPackedKeccak256 } from 'ethers';
 
 type RegistrationNonceData = {
     success: boolean;
@@ -96,21 +96,29 @@ export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
             if (!signMessage) throw new Error('Wallet does not support message signing!');
             if (!signTransaction) throw new Error('Wallet does not support transaction signing!');
 
-            const registrationNonce = await getRegistrationNonce();
+            const registrationNonce = BigInt(await getRegistrationNonce());
+            const timestamp = BigInt(Date.now());
 
-            const brokerIdHash = keccak256(hexToBytes(defaultAbiCoder.encode(['string'], [selectedBrokerId])));
-            console.log('Broker ID hash:', bytesToHex(brokerIdHash));
+            const brokerIdHash = solidityPackedKeccak256(['string'], [selectedBrokerId]);
+            console.log('Broker ID hash:', brokerIdHash);
+
             const msgToSign = keccak256(
                 hexToBytes(
                     defaultAbiCoder.encode(
                         ['bytes32', 'uint256', 'uint256', 'uint256'],
-                        [brokerIdHash, selectedChainId, BigInt(Date.now()), BigInt(registrationNonce)]
+                        [brokerIdHash, selectedChainId, timestamp, registrationNonce]
                     )
                 )
             );
 
             const msgToSignHex = bytesToHex(msgToSign);
             const msgToSignTextEncoded: Uint8Array = new TextEncoder().encode(msgToSignHex);
+
+            console.log('Broker ID:', selectedBrokerId);
+            console.log('Chain ID:', selectedChainId);
+            console.log('Registration nonce:', registrationNonce);
+            console.log('Timestamp:', timestamp);
+
             console.log('Message to sign bytes:', msgToSign);
             console.log('Message to sign hex string:', bytesToHex(msgToSign));
             console.log('Message to sign text encoded:', msgToSignTextEncoded);
@@ -122,8 +130,8 @@ export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
                 message: {
                     brokerId: selectedBrokerId,
                     chainId: BigInt(selectedChainId),
-                    timestamp: BigInt(Date.now()),
-                    registrationNonce: BigInt(registrationNonce),
+                    timestamp: timestamp,
+                    registrationNonce: registrationNonce,
                     chainType: 'SOL',
                 },
                 signature: signature,
