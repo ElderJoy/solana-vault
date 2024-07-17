@@ -23,6 +23,7 @@ interface AccountRegistrationMessage {
         chainId: BigInt;
         timestamp: BigInt;
         registrationNonce: BigInt;
+        chainType: string;
     };
     signature: string;
     userAddress: string;
@@ -66,7 +67,7 @@ export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
     const doRegisterAccount = async (accountRegistrationMessage: AccountRegistrationMessage) => {
         const requestBody = JSON.stringify(accountRegistrationMessage, replacer);
         console.log('Request body:', requestBody);
-        const response = await fetch(props.cefiBaseURL + '/v1/register_account_solana', {
+        const response = await fetch(props.cefiBaseURL + '/v1/register_account', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -123,6 +124,7 @@ export const RegisterUserAccountBox: FC<CommonProps> = (props) => {
                     chainId: BigInt(selectedChainId),
                     timestamp: BigInt(Date.now()),
                     registrationNonce: BigInt(registrationNonce),
+                    chainType: 'SOL',
                 },
                 signature: signature,
                 userAddress: encodeBase58(publicKey.toBytes()),
