@@ -1,14 +1,12 @@
-import { useEffect, useState, type FC, useCallback } from 'react';
-import { brockerIds, chainIds, CommonProps } from '../common';
-import { Button, CircularProgress, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { type FC } from 'react';
+import { CommonProps } from '../common';
+import { Button } from '@mui/material';
 import BoxWithTitle from '../BoxWithTitle';
 import { useNotify } from '../notify';
-import { keccak256 as keccak256_2 } from 'ethereum-cryptography/keccak';
-import { hexToBytes, bytesToHex } from 'ethereum-cryptography/utils';
-import { defaultAbiCoder } from '@ethersproject/abi';
+import { bytesToHex } from 'ethereum-cryptography/utils';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { encodeBase58, toUtf8Bytes, keccak256 } from 'ethers';
-import * as solanaWeb3 from '@solana/web3.js';
+import { toUtf8Bytes, keccak256 } from 'ethers';
+import { calculateAccountId } from '../common';
 
 export const SignCheckBox: FC<CommonProps> = (props) => {
     const notify = useNotify();
@@ -52,7 +50,15 @@ export const SignCheckBox: FC<CommonProps> = (props) => {
         return newArray;
     }
 
+    const checkCalculateAccountId = () => {
+        const brokerId = "woofi_dex";
+        const userAddress = "24PNhTaNtomHhoy3fTRaMhAFCRj4uHqhZEEoWrKDbR5p";
+        const accountId = calculateAccountId(userAddress, brokerId);
+        console.log('accountId:', accountId);
+    };
     const checkSignature = async () => {
+        checkCalculateAccountId();
+
         try {
             if (!publicKey) throw new Error('Wallet not connected!');
             if (!signMessage) throw new Error('Wallet does not support message signing!');

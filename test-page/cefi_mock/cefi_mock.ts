@@ -1,9 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-
-import { keccak256 } from 'ethereum-cryptography/keccak';
-import { hexToBytes, bytesToHex } from 'ethereum-cryptography/utils';
-import { defaultAbiCoder } from '@ethersproject/abi';
+import { calculateAccountId } from '../src/components/common';
 
 const app = express();
 const port = process.env.PORT || 3001; // Use a different port from Next.js
@@ -41,7 +38,7 @@ app.get('/v1/withdraw_nonce', (req, res) => {
     });
 });
 
-app.post('/v1/register_account_solana', (req, res) => {
+app.post('/v1/register_account', (req, res) => {
     console.log('Request body:', req.body);
 
     const userAddress = req.body.userAddress;
@@ -49,35 +46,15 @@ app.post('/v1/register_account_solana', (req, res) => {
     console.log('userAddress:', userAddress);
     console.log('brokerId:', brokerId);
 
-    // const accountId = CeFiMock.calculateAccountId(userAddress, brokerId);
-    // console.log('accountId:', accountId);
+    const accountId = calculateAccountId(userAddress, brokerId);
+    console.log('accountId:', accountId);
 
     res.json({
         "success": true,
         "data": {
             "user_id": 22,
-            "account_id": "0xe08634ad199202b8ee405986ebb3f20c56f8456a07fc55ec6a3a457dc129604e"
+            "account_id": accountId
         },
         "timestamp": Date.now()
     });
 });
-
-class CeFiMock {
-    public static calculateAccountId(address: string, brokerId: string): string {
-        if (!brokerId || brokerId.trim().length === 0) {
-            throw new Error("brokerId illegal");
-        }
-
-        const addressTextEncoded = new TextEncoder().encode(address);
-        console.log('addressTextEncoded:', addressTextEncoded);
-
-        const brokerIdHash = keccak256(hexToBytes(defaultAbiCoder.encode(['string'], [brokerId])));
-        console.log('brokerIdHash:', bytesToHex(brokerIdHash));
-
-        const concatenatedAbiString = defaultAbiCoder.encode(['bytes32', 'bytes32'], [addressTextEncoded, brokerIdHash]);
-        console.log('concatenatedAbiString:', concatenatedAbiString);
-
-        // Return the keccak256 hash of the concatenated bytes as a hex string
-        return bytesToHex(keccak256(hexToBytes(concatenatedAbiString)));
-    }
-}
