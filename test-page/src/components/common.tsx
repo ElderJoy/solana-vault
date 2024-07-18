@@ -5,7 +5,11 @@ import { defaultAbiCoder } from '@ethersproject/abi';
 
 export interface CommonProps {
     cefiBaseURL: string;
-    setCefiBaseUrl?: (url: string) => void;
+    brokerId: string;
+    chainId: BigInt;
+    setCefiBaseUrl: (url: string) => void;
+    setBrokerId: (brokerId: string) => void;
+    setChainId: (chainId: BigInt) => void;
 }
 
 export const chainIds = [900900900, 901901901, 902902902];
@@ -42,4 +46,12 @@ export const calculateAccountId = (address: string, brokerId: string): string =>
 
     // Return the keccak256 hash of the concatenated bytes as a hex string
     return bytesToHex(keccak256(hexToBytes(concatenate)));
+}
+
+export function bigIntReplacer(key: string, value: any) {
+    if (typeof value === 'bigint') {
+        return value.toString();
+    } else {
+        return value;
+    }
 }

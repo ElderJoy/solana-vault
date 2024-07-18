@@ -3,10 +3,12 @@ import type { NextPage } from 'next';
 import dynamic from 'next/dynamic';
 import React from 'react';
 import { useAutoConnect } from '../components/wallet/AutoConnectProvider';
-import { RegisterUserAccountBox } from '../components/withdraw/RegisterUserAccount';
-import { CommonProps, getCeFiBaseURL, localCeFiMockUrl } from '../components/common';
+import { brockerIds, chainIds, CommonProps, getCeFiBaseURL, localCeFiMockUrl } from '../components/common';
 import { CeFiBaseUrlView } from '../components/withdraw/CeFiBaseUrl';
-import { SignCheckBox } from '../components/withdraw/SignCheckBox';
+import { SignCheckButton } from '../components/withdraw/SignCheckButton';
+import { CommonValuesCheck } from '../components/withdraw/CommonValuesCheck';
+import { RegisterUserAccountButton } from '../components/withdraw/RegisterUserAccountButton';
+import { OrderlyKeyButton } from '../components/withdraw/OrderlyKeyButton';
 
 const MaterialUIWalletMultiButtonDynamic = dynamic(
     async () => (await import('@solana/wallet-adapter-material-ui')).WalletMultiButton,
@@ -47,9 +49,16 @@ const SignTransactionDynamic = dynamic(
 const Index: NextPage = () => {
     const { autoConnect, setAutoConnect } = useAutoConnect();
     const [cefiBaseURL, setCefiBaseUrl] = React.useState<string>(getCeFiBaseURL());
+    const [brokerId, setBrokerId] = React.useState<string>(brockerIds[0]);
+    const [chainId, setChainId] = React.useState<BigInt>(BigInt(chainIds[0]));
+
     const commonProps: CommonProps = {
         cefiBaseURL,
+        brokerId,
+        chainId,
         setCefiBaseUrl,
+        setBrokerId,
+        setChainId,
     };
 
     const QuaterWidthTableCell: React.FC<TableCellProps> = (props) => {
@@ -130,13 +139,17 @@ const Index: NextPage = () => {
                     </TableRow>
                     <TableRow>
                         <QuaterWidthTableCell>
-                            <RegisterUserAccountBox {...commonProps} />
+                            <CommonValuesCheck {...commonProps} />
                         </QuaterWidthTableCell>
                         <QuaterWidthTableCell>
-                            <SignCheckBox {...commonProps} />
+                            <RegisterUserAccountButton {...commonProps} />
                         </QuaterWidthTableCell>
-                        <QuaterWidthTableCell></QuaterWidthTableCell>
-                        <QuaterWidthTableCell></QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
+                            <OrderlyKeyButton {...commonProps} />
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
+                            <SignCheckButton {...commonProps} />
+                        </QuaterWidthTableCell>
                     </TableRow>
                 </TableBody>
             </Table>
