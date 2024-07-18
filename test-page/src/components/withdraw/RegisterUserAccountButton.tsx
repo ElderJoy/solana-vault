@@ -1,5 +1,5 @@
 import { type FC } from 'react';
-import { CommonProps } from '../common';
+import { bigIntReplacer, CommonProps, doCeFiRequest } from '../common';
 import { Button } from '@mui/material';
 import { useNotify } from '../notify';
 import { keccak256 } from 'ethereum-cryptography/keccak';
@@ -22,70 +22,17 @@ interface AccountRegistrationMessage extends BaseMessage {
 
 interface AccountRegistrationBody extends BaseBody<AccountRegistrationMessage> { }
 
-function replacer(key: string, value: any) {
-    if (typeof value === 'bigint') {
-        return value.toString();
-    } else {
-        return value;
-    }
-}
-
 export const RegisterUserAccountButton: FC<CommonProps> = (props) => {
     const notify = useNotify();
     const { publicKey, signMessage } = useWallet();
-
-    const getRegistrationNonce = async () => {
-        const response = await fetch(props.cefiBaseURL + '/v1/registration_nonce', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
-
-        if (response.status !== 200) {
-            throw new Error('Network response was not ok');
-        }
-
-        const registrationNonceData: RegistrationNonceData = await response.json();
-
-        if (!registrationNonceData.success) {
-            throw new Error('Request was not successful');
-        }
-
-        return registrationNonceData.data.registration_nonce;
-    };
-
-    const doRegisterAccount = async (accountRegistrationBody: AccountRegistrationBody) => {
-        const requestBody = JSON.stringify(accountRegistrationBody, replacer);
-        console.log('Request body:', requestBody);
-        const response = await fetch(props.cefiBaseURL + '/v1/register_account', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: requestBody,
-        });
-
-        console.log('Response from external server:', response);
-
-        if (response.status !== 200) {
-            throw new Error('Network response was not ok');
-        }
-
-        const data = await response.json();
-        console.log('Data from external server:', data);
-
-        if (!data.success) {
-            throw new Error('Request was not successful');
-        }
-    };
 
     const registerAccount = async () => {
         try {
             if (!publicKey) throw new Error('Wallet not connected!');
             if (!signMessage) throw new Error('Wallet does not support message signing!');
 
-            const registrationNonce = BigInt(await getRegistrationNonce());
+            // const registrationNonce = BigInt(await getRegistrationNonce());
+            const registrationNonce = BigInt((await doCeFiRequest('GET', '', props.cefiBaseURL + '/v1/registration_nonce')).data.registration_nonce);
             const timestamp = BigInt(Date.now());
             const brokerIdHash = solidityPackedKeccak256(['string'], [props.brokerId]);
             const msgToSign = keccak256(
@@ -99,16 +46,16 @@ export const RegisterUserAccountButton: FC<CommonProps> = (props) => {
             const msgToSignHex = bytesToHex(msgToSign);
             const msgToSignTextEncoded: Uint8Array = new TextEncoder().encode(msgToSignHex);
 
-            console.log('Broker ID:', props.brokerId);
-            console.log('Broker ID hash:', brokerIdHash);
-            console.log('Chain ID:', props.chainId);
-            console.log('Registration nonce:', registrationNonce);
-            console.log('Timestamp:', timestamp);
-            console.log('Message to sign hex string:', bytesToHex(msgToSign));
-            console.log('Message to sign text encoded:', msgToSignTextEncoded);
+            // console.log('Broker ID:', props.brokerId);
+            // console.log('Broker ID hash:', brokerIdHash);
+            // console.log('Chain ID:', props.chainId);
+            // console.log('Registration nonce:', registrationNonce);
+            // console.log('Timestamp:', timestamp);
+            // console.log('Message to sign hex string:', bytesToHex(msgToSign));
+            // console.log('Message to sign text encoded:', msgToSignTextEncoded);
 
             const signature = '0x' + bytesToHex(await signMessage(msgToSignTextEncoded));
-            console.log('Signature:', signature);
+            // console.log('Signature:', signature);
 
             const accountRegistrationBody: AccountRegistrationBody = {
                 message: {
@@ -123,7 +70,7 @@ export const RegisterUserAccountButton: FC<CommonProps> = (props) => {
             };
 
             console.log('Account registration message:', accountRegistrationBody);
-            await doRegisterAccount(accountRegistrationBody);
+            await doCeFiRequest('POST', JSON.stringify(accountRegistrationBody, bigIntReplacer), props.cefiBaseURL + '/v1/register_account');
 
             notify('success', 'Account registration successful');
         } catch (error) {

@@ -5,10 +5,11 @@ import React from 'react';
 import { useAutoConnect } from '../components/wallet/AutoConnectProvider';
 import { brockerIds, chainIds, CommonProps, getCeFiBaseURL, localCeFiMockUrl } from '../components/common';
 import { CeFiBaseUrlView } from '../components/withdraw/CeFiBaseUrl';
-import { SignCheckButton } from '../components/withdraw/SignCheckButton';
 import { CommonValuesCheck } from '../components/withdraw/CommonValuesCheck';
 import { RegisterUserAccountButton } from '../components/withdraw/RegisterUserAccountButton';
 import { OrderlyKeyButton } from '../components/withdraw/OrderlyKeyButton';
+import { WithdrawButton } from '../components/withdraw/WithdrawButton';
+import * as solanaWeb3 from "@solana/web3.js"
 
 const MaterialUIWalletMultiButtonDynamic = dynamic(
     async () => (await import('@solana/wallet-adapter-material-ui')).WalletMultiButton,
@@ -51,14 +52,17 @@ const Index: NextPage = () => {
     const [cefiBaseURL, setCefiBaseUrl] = React.useState<string>(getCeFiBaseURL());
     const [brokerId, setBrokerId] = React.useState<string>(brockerIds[0]);
     const [chainId, setChainId] = React.useState<BigInt>(BigInt(chainIds[0]));
+    const [keypair, setKeypair] = React.useState<solanaWeb3.Keypair>();
 
     const commonProps: CommonProps = {
         cefiBaseURL,
         brokerId,
         chainId,
+        keypair,
         setCefiBaseUrl,
         setBrokerId,
         setChainId,
+        setKeypair,
     };
 
     const QuaterWidthTableCell: React.FC<TableCellProps> = (props) => {
@@ -148,7 +152,7 @@ const Index: NextPage = () => {
                             <OrderlyKeyButton {...commonProps} />
                         </QuaterWidthTableCell>
                         <QuaterWidthTableCell>
-                            <SignCheckButton {...commonProps} />
+                            <WithdrawButton {...commonProps} />
                         </QuaterWidthTableCell>
                     </TableRow>
                 </TableBody>

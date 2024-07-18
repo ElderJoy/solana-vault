@@ -7,38 +7,43 @@ import { hexToBytes, bytesToHex } from 'ethereum-cryptography/utils';
 import { defaultAbiCoder } from '@ethersproject/abi';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { encodeBase58, solidityPackedKeccak256 } from 'ethers';
-import * as solanaWeb3 from "@solana/web3.js"
 
-interface OrderlyKeyMessage extends BaseMessage {
-    orderlyKey: string;
-    scope: string;
-    expiration: BigInt;
+type WithdrawNonceData = {
+    success: boolean;
+    data: {
+        withdraw_nonce: string;
+    };
+    timestamp: number;
+};
+
+interface WithdrawMessage extends BaseMessage {
+    receiver: string;
+    token: string;
+    amount: BigInt;
+    withdrawNonce: BigInt;
 }
 
-interface OrderlyKeyBody extends BaseBody<OrderlyKeyMessage> { }
+interface AccountWithdrawBody extends BaseBody<WithdrawMessage> {
+    verifyingContract: string;
+}
 
-export const OrderlyKeyButton: FC<CommonProps> = (props) => {
+export const WithdrawButton: FC<CommonProps> = (props) => {
     const notify = useNotify();
     const { publicKey, signMessage } = useWallet();
 
-    const orderlyKey = async () => {
+    const withdrawAccount = async () => {
         try {
             if (!publicKey) throw new Error('Wallet not connected!');
             if (!signMessage) throw new Error('Wallet does not support message signing!');
 
-            const brokerIdHash = solidityPackedKeccak256(['string'], [props.brokerId]);
-            const keypair = solanaWeb3.Keypair.generate();
-            const orderlyKey = 'ed25519:' + keypair.publicKey.toBase58();
-            const orderlyKeyHash = solidityPackedKeccak256(['string'], [orderlyKey]);
-            const scope = 'read';
-            const scopeHash = solidityPackedKeccak256(['string'], [scope]);
+            const withdrawNonce = BigInt((await doCeFiRequest('GET', '', props.cefiBaseURL + '/v1/withdraw_nonce')).data.withdraw_nonce);
             const timestamp = BigInt(Date.now());
-            const expiration = timestamp + BigInt(3600000);
+            const brokerIdHash = solidityPackedKeccak256(['string'], [props.brokerId]);
             const msgToSign = keccak256(
                 hexToBytes(
                     defaultAbiCoder.encode(
-                        ['bytes32', 'bytes32', 'bytes32', 'uint256', 'uint256', 'uint256'],
-                        [brokerIdHash, orderlyKeyHash, scopeHash, props.chainId, timestamp, expiration]
+                        ['bytes32', 'uint256', 'uint256', 'uint256'],
+                        [brokerIdHash, props.chainId, timestamp, withdrawNonce]
                     )
                 )
             );
@@ -48,37 +53,36 @@ export const OrderlyKeyButton: FC<CommonProps> = (props) => {
             // console.log('Broker ID:', props.brokerId);
             // console.log('Broker ID hash:', brokerIdHash);
             // console.log('Chain ID:', props.chainId);
-            // console.log('Orderly key:', orderlyKey);
-            // console.log('Orderly key hash:', orderlyKeyHash);
-            // console.log('Scope:', scope);
-            // console.log('Scope hash:', scopeHash);
+            // console.log('Withdraw nonce:', withdrawNonce);
             // console.log('Timestamp:', timestamp);
-            // console.log('Expiration:', expiration);
             // console.log('Message to sign hex string:', bytesToHex(msgToSign));
             // console.log('Message to sign text encoded:', msgToSignTextEncoded);
 
             const signature = '0x' + bytesToHex(await signMessage(msgToSignTextEncoded));
             // console.log('Signature:', signature);
 
-            const orderlyKeyBody: OrderlyKeyBody = {
+            const userAddress = encodeBase58(publicKey.toBytes());
+
+            const accountWithdrawBody: AccountWithdrawBody = {
                 message: {
                     brokerId: props.brokerId,
                     chainId: props.chainId,
-                    orderlyKey: orderlyKey,
-                    scope: scope,
                     timestamp: timestamp,
-                    expiration: expiration,
+                    receiver: userAddress,
+                    token: 'USDC',
+                    amount: BigInt(100000000),
+                    withdrawNonce: withdrawNonce,
                     chainType: 'SOL',
                 },
                 signature: signature,
-                userAddress: encodeBase58(publicKey.toBytes()),
+                userAddress,
+                verifyingContract: "0x8794E7260517B1766fc7b55cAfcd56e6bf08600e"
             };
 
-            console.log('Orderly key message:', orderlyKeyBody);
-            await doCeFiRequest('POST', JSON.stringify(orderlyKeyBody, bigIntReplacer), props.cefiBaseURL + '/v1/orderly_key');
+            console.log('Account withdraw message:', accountWithdrawBody);
+            await doCeFiRequest('POST', JSON.stringify(accountWithdrawBody, bigIntReplacer), props.cefiBaseURL + '/v1/withdraw_request');
 
-            props.setKeypair(keypair);
-            notify('success', 'Orderly key successful');
+            notify('success', 'Account withdraw successful');
         } catch (error) {
             console.log(error);
             if (error instanceof Error) {
@@ -95,10 +99,11 @@ export const OrderlyKeyButton: FC<CommonProps> = (props) => {
         <Button
             variant="contained"
             color="secondary"
-            onClick={orderlyKey}
-            disabled={!publicKey || !signMessage}
+            onClick={withdrawAccount}
+            style={{ marginRight: '1rem' }}
+            disabled={!publicKey || !signMessage || !props.keypair}
         >
-            Orderly Key
+            Withdraw Account
         </Button>
     );
 };

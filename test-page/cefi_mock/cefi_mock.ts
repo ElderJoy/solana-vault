@@ -65,7 +65,19 @@ app.post('/v1/orderly_key', (req, res) => {
     res.json({
         "success": true,
         "data": {
-            "orderly_key": "orderly_key_1234"
+            "orderly_key": req.body.message.orderlyKey
+        },
+        "timestamp": Date.now()
+    });
+});
+
+app.post('/v1/withdraw_request', (req, res) => {
+    console.log('Request body:', req.body);
+
+    res.json({
+        "success": true,
+        "data": {
+            "withdraw_receiver": req.body.message.receiver
         },
         "timestamp": Date.now()
     });
