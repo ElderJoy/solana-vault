@@ -5,14 +5,17 @@ import { defaultAbiCoder } from '@ethersproject/abi';
 
 export interface CommonProps {
     cefiBaseURL: string;
+    setCefiBaseUrl?: (url: string) => void;
 }
 
 export const chainIds = [900900900, 901901901, 902902902];
 
 export const brockerIds = ['woofi_dex', 'orderly', 'woofi_pro'];
 
+export const localCeFiMockUrl = 'http://localhost:3001';
+
 export const getCeFiBaseURL = (): string => {
-    return process.env.CEFI_BASE_UI ? process.env.CEFI_BASE_UI : 'http://localhost:3001';
+    return process.env.CEFI_BASE_UI ? process.env.CEFI_BASE_UI : localCeFiMockUrl;
 };
 
 export const calculateAccountId = (address: string, brokerId: string): string => {

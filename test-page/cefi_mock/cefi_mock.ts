@@ -58,3 +58,15 @@ app.post('/v1/register_account', (req, res) => {
         "timestamp": Date.now()
     });
 });
+
+app.post('/v1/orderly_key', (req, res) => {
+    console.log('Request body:', req.body);
+
+    res.json({
+        "success": true,
+        "data": {
+            "orderly_key": "orderly_key_1234"
+        },
+        "timestamp": Date.now()
+    });
+});

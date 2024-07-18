@@ -1,10 +1,10 @@
-import { FormControlLabel, Switch, Table, TableBody, TableCell, TableRow, Tooltip } from '@mui/material';
+import { FormControlLabel, Switch, Table, TableBody, TableCell, TableCellProps, TableRow, Tooltip } from '@mui/material';
 import type { NextPage } from 'next';
 import dynamic from 'next/dynamic';
 import React from 'react';
 import { useAutoConnect } from '../components/wallet/AutoConnectProvider';
 import { RegisterUserAccountBox } from '../components/withdraw/RegisterUserAccount';
-import { CommonProps, getCeFiBaseURL } from '../components/common';
+import { CommonProps, getCeFiBaseURL, localCeFiMockUrl } from '../components/common';
 import { CeFiBaseUrlView } from '../components/withdraw/CeFiBaseUrl';
 import { SignCheckBox } from '../components/withdraw/SignCheckBox';
 
@@ -46,8 +46,14 @@ const SignTransactionDynamic = dynamic(
 
 const Index: NextPage = () => {
     const { autoConnect, setAutoConnect } = useAutoConnect();
+    const [cefiBaseURL, setCefiBaseUrl] = React.useState<string>(getCeFiBaseURL());
     const commonProps: CommonProps = {
-        cefiBaseURL: getCeFiBaseURL(),
+        cefiBaseURL,
+        setCefiBaseUrl,
+    };
+
+    const QuaterWidthTableCell: React.FC<TableCellProps> = (props) => {
+        return <TableCell style={{ width: '25%' }} {...props} />;
     };
 
     return (
@@ -55,10 +61,10 @@ const Index: NextPage = () => {
             <Table>
                 <TableBody>
                     <TableRow>
-                        <TableCell>
+                        <QuaterWidthTableCell>
                             <MaterialUIWalletMultiButtonDynamic />
-                        </TableCell>
-                        <TableCell>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
                             <Tooltip title="Only runs if the wallet is ready to connect" placement="left">
                                 <FormControlLabel
                                     control={
@@ -72,50 +78,65 @@ const Index: NextPage = () => {
                                     label="AutoConnect"
                                 />
                             </Tooltip>
-                        </TableCell>
-                        <TableCell>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
+                            <Tooltip title="Switch to local CeFi mock" placement="left">
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            name="Local CeFi mock"
+                                            color="secondary"
+                                            checked={cefiBaseURL === localCeFiMockUrl}
+                                            onChange={(event, checked) => { if (checked) setCefiBaseUrl(localCeFiMockUrl); else setCefiBaseUrl(getCeFiBaseURL()); }}
+                                        />
+                                    }
+                                    label="Local CeFi mock"
+                                />
+                            </Tooltip>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
                             <CeFiBaseUrlView {...commonProps} />
-                        </TableCell>
+                        </QuaterWidthTableCell>
                     </TableRow>
                 </TableBody>
             </Table>
             <Table>
                 <TableBody>
                     <TableRow>
-                        <TableCell>
+                        <QuaterWidthTableCell>
                             <RequestAirdropDynamic />
-                        </TableCell>
-                        <TableCell>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
                             <SignTransactionDynamic />
-                        </TableCell>
-                        <TableCell>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
                             <SignMessageDynamic />
-                        </TableCell>
-                        <TableCell>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
                             <SignInDynamic />
-                        </TableCell>
+                        </QuaterWidthTableCell>
                     </TableRow>
                     <TableRow>
-                        <TableCell>
+                        <QuaterWidthTableCell>
                             <SendTransactionDynamic />
-                        </TableCell>
-                        <TableCell>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
                             <SendLegacyTransactionDynamic />
-                        </TableCell>
-                        <TableCell>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
                             <SendV0TransactionDynamic />
-                        </TableCell>
-                        <TableCell></TableCell>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
                     </TableRow>
                     <TableRow>
-                        <TableCell>
+                        <QuaterWidthTableCell>
                             <RegisterUserAccountBox {...commonProps} />
-                        </TableCell>
-                        <TableCell>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
                             <SignCheckBox {...commonProps} />
-                        </TableCell>
-                        <TableCell></TableCell>
-                        <TableCell></TableCell>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
                     </TableRow>
                 </TableBody>
             </Table>

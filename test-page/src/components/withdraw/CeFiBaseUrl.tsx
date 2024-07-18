@@ -1,5 +1,4 @@
 import type { FC } from 'react';
-import Box from '@mui/material/Box';
 import { CommonProps } from '../common';
 import BoxWithTitle from '../BoxWithTitle';
 
