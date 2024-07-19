@@ -32,7 +32,7 @@ export const RegisterUserAccountButton: FC<CommonProps> = (props) => {
             if (!signMessage) throw new Error('Wallet does not support message signing!');
 
             // const registrationNonce = BigInt(await getRegistrationNonce());
-            const registrationNonce = BigInt((await doCeFiRequest('GET', '', props.cefiBaseURL + '/v1/registration_nonce')).data.registration_nonce);
+            const registrationNonce = BigInt((await doCeFiRequest(props.cefiBaseURL + '/v1/registration_nonce', 'GET')).data.registration_nonce);
             const timestamp = BigInt(Date.now());
             const brokerIdHash = solidityPackedKeccak256(['string'], [props.brokerId]);
             const msgToSign = keccak256(
@@ -70,7 +70,7 @@ export const RegisterUserAccountButton: FC<CommonProps> = (props) => {
             };
 
             console.log('Account registration message:', accountRegistrationBody);
-            await doCeFiRequest('POST', JSON.stringify(accountRegistrationBody, bigIntReplacer), props.cefiBaseURL + '/v1/register_account');
+            await doCeFiRequest(props.cefiBaseURL + '/v1/register_account', 'POST', JSON.stringify(accountRegistrationBody, bigIntReplacer));
 
             notify('success', 'Account registration successful');
         } catch (error) {
@@ -88,7 +88,7 @@ export const RegisterUserAccountButton: FC<CommonProps> = (props) => {
     return (
         <Button
             variant="contained"
-            color="secondary"
+            color="primary"
             onClick={registerAccount}
             style={{ marginRight: '1rem' }}
             disabled={!publicKey || !signMessage}

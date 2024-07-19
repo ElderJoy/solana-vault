@@ -8,7 +8,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { toUtf8Bytes, keccak256 } from 'ethers';
 import { calculateAccountId } from '../common';
 
-export const SignCheckButton: FC<CommonProps> = (props) => {
+export const SolanaSignCheckButton: FC<CommonProps> = (props) => {
     const notify = useNotify();
     const { publicKey, signMessage } = useWallet();
 
@@ -95,7 +95,7 @@ export const SignCheckButton: FC<CommonProps> = (props) => {
     return (
         <Button
             variant="contained"
-            color="secondary"
+            color="primary"
             onClick={checkSignature}
             disabled={!publicKey || !signMessage}
         >

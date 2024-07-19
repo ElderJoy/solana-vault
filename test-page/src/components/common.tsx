@@ -1,4 +1,4 @@
-import { decodeBase58, solidityPackedKeccak256 } from 'ethers';
+import { decodeBase58, encodeBase58, solidityPackedKeccak256 } from 'ethers';
 import { keccak256 } from 'ethereum-cryptography/keccak';
 import { hexToBytes, bytesToHex } from 'ethereum-cryptography/utils';
 import { defaultAbiCoder } from '@ethersproject/abi';
@@ -25,6 +25,12 @@ export const getCeFiBaseURL = (): string => {
     return process.env.CEFI_BASE_UI ? process.env.CEFI_BASE_UI : localCeFiMockUrl;
 };
 
+export const defaultLedgerContractAddress = '0x8794E7260517B1766fc7b55cAfcd56e6bf08600e';
+
+export const getLedgerContractAddress = (): string => {
+    return process.env.LEDGER_CONTRACT_ADDRESS ? process.env.LEDGER_CONTRACT_ADDRESS : defaultLedgerContractAddress;
+}
+
 export const calculateAccountId = (address: string, brokerId: string): string => {
     if (!brokerId || brokerId.trim().length === 0) {
         throw new Error("brokerId illegal");
@@ -48,7 +54,11 @@ export const calculateAccountId = (address: string, brokerId: string): string =>
     // console.log('concatenatedAbiString:', concatenate);
 
     // Return the keccak256 hash of the concatenated bytes as a hex string
-    return bytesToHex(keccak256(hexToBytes(concatenate)));
+    return '0x' + bytesToHex(keccak256(hexToBytes(concatenate)));
+}
+
+export const getAccountId = (props: CommonProps) => {
+    return calculateAccountId(encodeBase58(props.keypair!.publicKey.toBytes()), props.brokerId);
 }
 
 export function bigIntReplacer(key: string, value: any) {
@@ -59,13 +69,11 @@ export function bigIntReplacer(key: string, value: any) {
     }
 }
 
-export const doCeFiRequest = async (method: string, body: string, url: string) => {
+export const doCeFiRequest = async (url: string, method: string, body: string = '', headers: any = { 'Content-Type': 'application/json' }) => {
     // console.log('Request body:', body);
     const response = await fetch(url, {
         method,
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: headers,
         body: method === 'POST' ? body : undefined,
     });
 

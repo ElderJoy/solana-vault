@@ -10,6 +10,7 @@ import { RegisterUserAccountButton } from '../components/withdraw/RegisterUserAc
 import { OrderlyKeyButton } from '../components/withdraw/OrderlyKeyButton';
 import { WithdrawButton } from '../components/withdraw/WithdrawButton';
 import * as solanaWeb3 from "@solana/web3.js"
+import { OrderlySignCheckButton } from '../components/withdraw/OrderlySignCheckButton';
 
 const MaterialUIWalletMultiButtonDynamic = dynamic(
     async () => (await import('@solana/wallet-adapter-material-ui')).WalletMultiButton,
@@ -49,9 +50,10 @@ const SignTransactionDynamic = dynamic(
 
 const Index: NextPage = () => {
     const { autoConnect, setAutoConnect } = useAutoConnect();
+    const [showWalletAdapterWidgets, setShowWalletAdapterWidgets] = React.useState<boolean>(false);
     const [cefiBaseURL, setCefiBaseUrl] = React.useState<string>(getCeFiBaseURL());
     const [brokerId, setBrokerId] = React.useState<string>(brockerIds[0]);
-    const [chainId, setChainId] = React.useState<BigInt>(BigInt(chainIds[0]));
+    const [chainId, setChainId] = React.useState<BigInt>(BigInt(chainIds[2]));
     const [keypair, setKeypair] = React.useState<solanaWeb3.Keypair>();
 
     const commonProps: CommonProps = {
@@ -97,7 +99,7 @@ const Index: NextPage = () => {
                                 <FormControlLabel
                                     control={
                                         <Switch
-                                            name="Local CeFi mock"
+                                            name="LocalCeFiMock"
                                             color="secondary"
                                             checked={cefiBaseURL === localCeFiMockUrl}
                                             onChange={(event, checked) => { if (checked) setCefiBaseUrl(localCeFiMockUrl); else setCefiBaseUrl(getCeFiBaseURL()); }}
@@ -117,19 +119,40 @@ const Index: NextPage = () => {
                 <TableBody>
                     <TableRow>
                         <QuaterWidthTableCell>
-                            <RequestAirdropDynamic />
+                            <Tooltip title="Show wallet-adapter widgets" placement="left">
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            name="ShowWalletAdapterWidgets"
+                                            color="secondary"
+                                            checked={showWalletAdapterWidgets === true}
+                                            onChange={(event, checked) => { setShowWalletAdapterWidgets(checked); }}
+                                        />
+                                    }
+                                    label="Show wallet-adapter widgets"
+                                />
+                            </Tooltip>
                         </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
+                            <div style={{ display: showWalletAdapterWidgets ? 'block' : 'none' }}>
+                                <SignInDynamic />
+                            </div>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
+                            <div style={{ display: showWalletAdapterWidgets ? 'block' : 'none' }}>
+                                <SignMessageDynamic />
+                            </div>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
+                            <div style={{ display: showWalletAdapterWidgets ? 'block' : 'none' }}>
+                                <RequestAirdropDynamic />
+                            </div>
+                        </QuaterWidthTableCell>
+                    </TableRow>
+                    <TableRow sx={{ display: showWalletAdapterWidgets ? 'table-row' : 'none' }}>
                         <QuaterWidthTableCell>
                             <SignTransactionDynamic />
                         </QuaterWidthTableCell>
-                        <QuaterWidthTableCell>
-                            <SignMessageDynamic />
-                        </QuaterWidthTableCell>
-                        <QuaterWidthTableCell>
-                            <SignInDynamic />
-                        </QuaterWidthTableCell>
-                    </TableRow>
-                    <TableRow>
                         <QuaterWidthTableCell>
                             <SendTransactionDynamic />
                         </QuaterWidthTableCell>
@@ -139,7 +162,6 @@ const Index: NextPage = () => {
                         <QuaterWidthTableCell>
                             <SendV0TransactionDynamic />
                         </QuaterWidthTableCell>
-                        <QuaterWidthTableCell></QuaterWidthTableCell>
                     </TableRow>
                     <TableRow>
                         <QuaterWidthTableCell>
@@ -155,6 +177,14 @@ const Index: NextPage = () => {
                             <WithdrawButton {...commonProps} />
                         </QuaterWidthTableCell>
                     </TableRow>
+                    {/* <TableRow>
+                        <QuaterWidthTableCell>
+                            <OrderlySignCheckButton {...commonProps} />
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
+                    </TableRow> */}
                 </TableBody>
             </Table>
         </>
