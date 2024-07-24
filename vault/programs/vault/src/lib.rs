@@ -21,11 +21,40 @@ pub mod vault {
         token::transfer(cpi_ctx, amount)?;
 
         let user_info = &mut ctx.accounts.user_info;
-        user_info.authority = ctx.accounts.user.key();
-        user_info.amount = amount;
+        user_info.user = ctx.accounts.user.key();
+        user_info.amount += amount;
 
         Ok(())
     }
+
+    pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+        msg!("Instruction: Withdraw");
+
+        let user_info = &mut ctx.accounts.user_info;
+
+        if user_info.amount < amount {
+            return Err(ErrorCode::InsufficientFunds.into());
+        }
+
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.admin_deposit_wallet.to_account_info(),
+            to: ctx.accounts.user_deposit_wallet.to_account_info(),
+            authority: ctx.accounts.admin.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        token::transfer(cpi_ctx, amount)?;
+
+        user_info.amount -= amount;
+
+        Ok(())
+    }
+}
+
+#[error_code]
+pub enum ErrorCode {
+    #[msg("deposited fundc are insufficient")]
+    InsufficientFunds,
 }
 
 #[derive(Accounts)]
@@ -46,9 +75,26 @@ pub struct Deposit<'info> {
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+pub struct Withdraw<'info> {
+    #[account(mut)]
+    pub user: AccountInfo<'info>,
+    #[account(mut)]
+    pub admin: AccountInfo<'info>,
+    #[account(mut, has_one = user)]
+    pub user_info: Account<'info, UserInfo>,
+    #[account(mut)]
+    pub user_deposit_wallet: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub admin_deposit_wallet: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub deposit_token: InterfaceAccount<'info, Mint>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
 #[account]
 pub struct UserInfo {
-    pub authority: Pubkey,
+    pub user: Pubkey,
     pub amount: u64,
 }
 

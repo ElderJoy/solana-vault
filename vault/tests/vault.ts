@@ -79,4 +79,29 @@ describe("vault", () => {
     const userInfoAfter = await program.account.userInfo.fetch(userInfo.publicKey);
     assert.strictEqual(userInfoAfter.amount.toNumber(), 1e10);
   });
+
+  it("withdraw", async () => {
+    const userTokenAccountBefore = await token.getAccountInfo(userTokenAccount);
+    assert.strictEqual(userTokenAccountBefore.amount.toNumber(), 0);
+
+    const tx = await program.methods.withdraw(new BN(1e10)).accounts({
+      user: user.publicKey,
+      admin: admin.publicKey,
+      userInfo: userInfo.publicKey,
+      userDepositWallet: userTokenAccount,
+      adminDepositWallet: adminTokenAccount,
+      depositToken: token.publicKey,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    }).rpc();
+    console.log("Withdraw transaction signature", tx);
+
+    const adminTokenAccountAfter = await token.getAccountInfo(adminTokenAccount);
+    assert.strictEqual(adminTokenAccountAfter.amount.toNumber(), 0);
+
+    const userTokenAccountAfter = await token.getAccountInfo(userTokenAccount);
+    assert.strictEqual(userTokenAccountAfter.amount.toNumber(), 1e10);
+
+    const userInfoAfter = await program.account.userInfo.fetch(userInfo.publicKey);
+    assert.strictEqual(userInfoAfter.amount.toNumber(), 0);
+  });
 });
