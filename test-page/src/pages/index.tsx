@@ -11,6 +11,7 @@ import { OrderlyKeyButton } from '../components/withdraw/OrderlyKeyButton';
 import { WithdrawButton } from '../components/withdraw/WithdrawButton';
 import * as solanaWeb3 from "@solana/web3.js"
 import { OrderlySignCheckButton } from '../components/withdraw/OrderlySignCheckButton';
+import { DepositInitButton } from '../components/deposit/DepositInitButton';
 
 const MaterialUIWalletMultiButtonDynamic = dynamic(
     async () => (await import('@solana/wallet-adapter-material-ui')).WalletMultiButton,
@@ -162,6 +163,15 @@ const Index: NextPage = () => {
                         <QuaterWidthTableCell>
                             <SendV0TransactionDynamic />
                         </QuaterWidthTableCell>
+                    </TableRow>
+                    <TableRow>
+                        <QuaterWidthTableCell>
+
+                            <DepositInitButton {...commonProps} />
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
                     </TableRow>
                     <TableRow>
                         <QuaterWidthTableCell>

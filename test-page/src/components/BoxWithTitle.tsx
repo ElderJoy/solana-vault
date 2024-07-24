@@ -26,7 +26,7 @@ const BoxWithTitle: React.FC<BoxWithTitleProps> = ({ title, children, sx }) => {
                     position: 'absolute',
                     top: -20, // Adjust based on the size of the Typography
                 }}
-                variant="h7"
+                variant="body2"
             >
                 {title}
             </Typography>
