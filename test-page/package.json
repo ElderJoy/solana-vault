@@ -41,6 +41,7 @@
         "@mui/icons-material": "^5.11.16",
         "@mui/material": "^5.13.5",
         "@noble/curves": "^1.1.0",
+        "@solana/spl-token": "^0.4.8",
         "@solana/wallet-adapter-base": "^0.9.23",
         "@solana/wallet-adapter-material-ui": "^0.16.34",
         "@solana/wallet-adapter-react": "^0.15.35",

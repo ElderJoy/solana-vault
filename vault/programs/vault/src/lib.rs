@@ -2,11 +2,21 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
-declare_id!("7u49DKPmZd3M1PtpNishUTjM6EV2yU72AaqN1RSiZBXs");
+declare_id!("BaAvEW8J8da9a9Lzn1ScxLYS4z17gGsHsd7smG2jfXyh");
 
 #[program]
 pub mod vault {
     use super::*;
+
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        msg!("Instruction: Initialize");
+
+        let user_info = &mut ctx.accounts.user_info;
+        user_info.user = ctx.accounts.user.key();
+        user_info.amount = 0;
+
+        Ok(())
+    }
 
     pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         msg!("Instruction: Deposit");
@@ -21,7 +31,6 @@ pub mod vault {
         token::transfer(cpi_ctx, amount)?;
 
         let user_info = &mut ctx.accounts.user_info;
-        user_info.user = ctx.accounts.user.key();
         user_info.amount += amount;
 
         Ok(())
@@ -58,12 +67,12 @@ pub enum ErrorCode {
 }
 
 #[derive(Accounts)]
-pub struct Deposit<'info> {
+pub struct Initialize<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(mut)]
     pub admin: AccountInfo<'info>,
-    #[account(init, payer = user, space = 8 + UserInfo::LEN)]
+    #[account(init, payer = user, space = 8 + UserInfo::LEN, seeds = [user.key().as_ref()], bump)]
     pub user_info: Account<'info, UserInfo>,
     #[account(mut)]
     pub user_deposit_wallet: InterfaceAccount<'info, TokenAccount>,
@@ -73,6 +82,23 @@ pub struct Deposit<'info> {
     pub deposit_token: InterfaceAccount<'info, Mint>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct Deposit<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(mut)]
+    pub admin: AccountInfo<'info>,
+    #[account(mut, has_one = user)]
+    pub user_info: Account<'info, UserInfo>,
+    #[account(mut)]
+    pub user_deposit_wallet: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub admin_deposit_wallet: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub deposit_token: InterfaceAccount<'info, Mint>,
+    pub token_program: Interface<'info, TokenInterface>,
 }
 
 #[derive(Accounts)]

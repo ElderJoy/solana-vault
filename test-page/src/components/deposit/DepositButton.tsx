@@ -12,13 +12,13 @@ import {
 import { BN, Program } from "@coral-xyz/anchor";
 
 
-export const DepositInitButton: FC<CommonProps> = (props) => {
+export const DepositButton: FC<CommonProps> = (props) => {
     const { publicKey, sendTransaction, signTransaction } = useWallet();
     const wallet = useAnchorWallet();
     const { connection } = useConnection();
     const notify = useNotify();
 
-    const DepositInit = useCallback(async () => {
+    const Deposit = useCallback(async () => {
         try {
             if (!publicKey || !wallet || !signTransaction || !sendTransaction || !props.testUsdcTokenAddress || !props.vaultProgram || !props.adminAddress) {
                 throw new Error('Wallet, testUsdcTokenAddress, vaultProgram, or adminAddress not available');
@@ -45,7 +45,9 @@ export const DepositInitButton: FC<CommonProps> = (props) => {
             console.log(`userAssociatedTokenAddress: ${userAssociatedTokenAddress.toBase58()}`);
             console.log(`pda: ${pda.toBase58()}`);
 
-            let transaction = await props.vaultProgram.methods.initialize().accounts({
+            const { blockhash } = await connection.getLatestBlockhash();
+
+            let transaction = await props.vaultProgram.methods.deposit(new BN(1000)).accounts({
                 user: publicKey,
                 admin: adminPublicKey,
                 userInfo: pda,
@@ -54,7 +56,7 @@ export const DepositInitButton: FC<CommonProps> = (props) => {
                 depositToken: tokenPublicKey,
                 tokenProgram: TOKEN_PROGRAM_ID,
             }).transaction();
-            console.log("Deposit initialize transaction signature", transaction);
+            console.log("Deposit transaction signature", transaction);
 
             const transactionSignature = await sendTransaction(transaction, connection);
 
@@ -77,10 +79,10 @@ export const DepositInitButton: FC<CommonProps> = (props) => {
         <Button
             variant="contained"
             color="primary"
-            onClick={DepositInit}
+            onClick={Deposit}
             disabled={!publicKey || !sendTransaction || !props.vaultProgram || !props.adminAddress}
         >
-            Deposit init
+            Deposit
         </Button>
     );
 };
