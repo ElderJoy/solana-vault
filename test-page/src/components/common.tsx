@@ -3,16 +3,26 @@ import { keccak256 } from 'ethereum-cryptography/keccak';
 import { hexToBytes, bytesToHex } from 'ethereum-cryptography/utils';
 import { defaultAbiCoder } from '@ethersproject/abi';
 import * as solanaWeb3 from "@solana/web3.js"
+import { Program } from "@coral-xyz/anchor";
+import { IDL, Vault } from "../idl/vault";
+import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
 
 export interface CommonProps {
     cefiBaseURL: string;
     brokerId: string;
     chainId: BigInt;
-    keypair: solanaWeb3.Keypair | undefined;
+    orderlyKeypair?: solanaWeb3.Keypair;
+    testUsdcTokenAddress?: string;
+    vaultProgramAddress: string;
+    vaultProgram?: Program<Vault>;
+    adminAddress?: string;
     setCefiBaseUrl: (url: string) => void;
     setBrokerId: (brokerId: string) => void;
     setChainId: (chainId: BigInt) => void;
-    setKeypair: (keypair: solanaWeb3.Keypair) => void;
+    setOrderlyKeypair: (keypair: solanaWeb3.Keypair) => void;
+    setTestUsdcTokenAddress: (address: string) => void;
+    setVaultProgramAddress: (address: string) => void;
+    setAdminAddress: (address: string) => void;
 }
 
 export const chainIds = [900900900, 901901901, 902902902];
@@ -30,6 +40,19 @@ export const defaultLedgerContractAddress = '0x8794E7260517B1766fc7b55cAfcd56e6b
 export const getLedgerContractAddress = (): string => {
     return process.env.LEDGER_CONTRACT_ADDRESS ? process.env.LEDGER_CONTRACT_ADDRESS : defaultLedgerContractAddress;
 }
+
+export const DEFAULT_VAULT_PROGRAM_ADDRESS = "7u49DKPmZd3M1PtpNishUTjM6EV2yU72AaqN1RSiZBXs";
+const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+
+export const getVaultProgram = (vaultProgramAddress: string) => {
+    return new Program<Vault>(IDL, new PublicKey(vaultProgramAddress), {
+        connection,
+    });
+}
+
+export const DEFAULT_USDC_TOKEN_ADDRESS = "GCbuQSPFGmHpoTaZ9o7zQChYMuprw8qY3FsYQjKjpJMJ";
+
+export const DEFAULT_ADMIN_ADDRESS = "9XCffTvLgdtZmUCZLr2ZStxdKqxajFafA8xrv2jYQxV2";
 
 export const calculateAccountId = (address: string, brokerId: string): string => {
     if (!brokerId || brokerId.trim().length === 0) {
@@ -58,7 +81,7 @@ export const calculateAccountId = (address: string, brokerId: string): string =>
 }
 
 export const getAccountId = (props: CommonProps) => {
-    return calculateAccountId(encodeBase58(props.keypair!.publicKey.toBytes()), props.brokerId);
+    return calculateAccountId(encodeBase58(props.orderlyKeypair!.publicKey.toBytes()), props.brokerId);
 }
 
 export function bigIntReplacer(key: string, value: any) {

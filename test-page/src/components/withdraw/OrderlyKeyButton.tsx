@@ -77,7 +77,7 @@ export const OrderlyKeyButton: FC<CommonProps> = (props) => {
             console.log('Orderly key message:', orderlyKeyBody);
             await doCeFiRequest(props.cefiBaseURL + '/v1/orderly_key', 'POST', JSON.stringify(orderlyKeyBody, bigIntReplacer));
 
-            props.setKeypair(keypair);
+            props.setOrderlyKeypair(keypair);
             notify('success', 'Orderly key successful');
         } catch (error) {
             console.log(error);

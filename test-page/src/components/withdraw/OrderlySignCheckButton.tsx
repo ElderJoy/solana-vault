@@ -17,12 +17,12 @@ export const OrderlySignCheckButton: FC<CommonProps> = (props) => {
             const msgToSign = timestamp + urlString;
             console.log('Message to sign:', msgToSign);
             const messageBytes = Buffer.from(msgToSign);
-            const signature = nacl.sign.detached(messageBytes, props.keypair!.secretKey);
+            const signature = nacl.sign.detached(messageBytes, props.orderlyKeypair!.secretKey);
             console.log('Signature:', bytesToHex(signature));
             const signatureBase64 = Buffer.from(signature).toString('base64');
             console.log('Signature base64:', signatureBase64);
 
-            const orderlyKey = 'ed25519:' + props.keypair?.publicKey.toBase58();
+            const orderlyKey = 'ed25519:' + props.orderlyKeypair?.publicKey.toBase58();
             const orderlyAccountId = getAccountId(props);
             const headers = {
                 'orderly-account-id': orderlyAccountId,
@@ -51,7 +51,7 @@ export const OrderlySignCheckButton: FC<CommonProps> = (props) => {
             variant="contained"
             color="primary"
             onClick={checkSignature}
-            disabled={!props.keypair}
+            disabled={!props.orderlyKeypair}
         >
             Check Signature
         </Button>

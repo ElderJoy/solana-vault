@@ -3,7 +3,7 @@ import type { NextPage } from 'next';
 import dynamic from 'next/dynamic';
 import React from 'react';
 import { useAutoConnect } from '../components/wallet/AutoConnectProvider';
-import { brockerIds, chainIds, CommonProps, getCeFiBaseURL, localCeFiMockUrl } from '../components/common';
+import { DEFAULT_VAULT_PROGRAM_ADDRESS, brockerIds, chainIds, CommonProps, getCeFiBaseURL, getVaultProgram, localCeFiMockUrl, DEFAULT_USDC_TOKEN_ADDRESS, DEFAULT_ADMIN_ADDRESS } from '../components/common';
 import { CeFiBaseUrlView } from '../components/withdraw/CeFiBaseUrl';
 import { CommonValuesCheck } from '../components/withdraw/CommonValuesCheck';
 import { RegisterUserAccountButton } from '../components/withdraw/RegisterUserAccountButton';
@@ -12,6 +12,7 @@ import { WithdrawButton } from '../components/withdraw/WithdrawButton';
 import * as solanaWeb3 from "@solana/web3.js"
 import { OrderlySignCheckButton } from '../components/withdraw/OrderlySignCheckButton';
 import { DepositInitButton } from '../components/deposit/DepositInitButton';
+import BoxWithTitle from '../components/BoxWithTitle';
 
 const MaterialUIWalletMultiButtonDynamic = dynamic(
     async () => (await import('@solana/wallet-adapter-material-ui')).WalletMultiButton,
@@ -55,17 +56,33 @@ const Index: NextPage = () => {
     const [cefiBaseURL, setCefiBaseUrl] = React.useState<string>(getCeFiBaseURL());
     const [brokerId, setBrokerId] = React.useState<string>(brockerIds[0]);
     const [chainId, setChainId] = React.useState<BigInt>(BigInt(chainIds[2]));
-    const [keypair, setKeypair] = React.useState<solanaWeb3.Keypair>();
+    const [orderlyKeypair, setOrderlyKeypair] = React.useState<solanaWeb3.Keypair>();
+    const [testUsdcTokenAddress, setTestUsdcTokenAddress] = React.useState<string>(process.env.TEST_USDC_TOKEN_ADDRESS ? process.env.TEST_USDC_TOKEN_ADDRESS : DEFAULT_USDC_TOKEN_ADDRESS);
+    const [vaultProgramAddress, setVaultProgramAddress] = React.useState<string>(process.env.VAULT_PROGRAM_ADDRESS ? process.env.VAULT_PROGRAM_ADDRESS : DEFAULT_VAULT_PROGRAM_ADDRESS);
+    const [vaultProgram, setVaultProgram] = React.useState(getVaultProgram(vaultProgramAddress));
+    const [adminAddress, setAdminAddress] = React.useState<string>(process.env.ADMIN_ADDRESS ? process.env.ADMIN_ADDRESS : DEFAULT_ADMIN_ADDRESS);
+
+    const setVaultProgramAddressAndProgram = (address: string) => {
+        setVaultProgramAddress(address);
+        setVaultProgram(getVaultProgram(address));
+    }
 
     const commonProps: CommonProps = {
         cefiBaseURL,
         brokerId,
         chainId,
-        keypair,
+        orderlyKeypair,
+        testUsdcTokenAddress,
+        vaultProgramAddress,
+        vaultProgram,
+        adminAddress,
         setCefiBaseUrl,
         setBrokerId,
         setChainId,
-        setKeypair,
+        setOrderlyKeypair,
+        setTestUsdcTokenAddress,
+        setVaultProgramAddress: setVaultProgramAddressAndProgram,
+        setAdminAddress,
     };
 
     const QuaterWidthTableCell: React.FC<TableCellProps> = (props) => {
@@ -114,10 +131,48 @@ const Index: NextPage = () => {
                             <CeFiBaseUrlView {...commonProps} />
                         </QuaterWidthTableCell>
                     </TableRow>
-                </TableBody>
-            </Table>
-            <Table>
-                <TableBody>
+                    <TableRow>
+                        <QuaterWidthTableCell>
+                            <BoxWithTitle title="Vault program address">{commonProps.vaultProgramAddress ? commonProps.vaultProgramAddress : 'not set'}</BoxWithTitle>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
+                            <BoxWithTitle title="Test USDC token address">{commonProps.testUsdcTokenAddress ? commonProps.testUsdcTokenAddress : 'not set'}</BoxWithTitle>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
+                            <BoxWithTitle title="Admin address">{commonProps.adminAddress ? commonProps.adminAddress : 'not set'}</BoxWithTitle>
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
+                    </TableRow>
+                    <TableRow>
+                        <QuaterWidthTableCell>
+                            <DepositInitButton {...commonProps} />
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
+                    </TableRow>
+                    <TableRow>
+                        <QuaterWidthTableCell>
+                            <CommonValuesCheck {...commonProps} />
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
+                            <RegisterUserAccountButton {...commonProps} />
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
+                            <OrderlyKeyButton {...commonProps} />
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell>
+                            <WithdrawButton {...commonProps} />
+                        </QuaterWidthTableCell>
+                    </TableRow>
+                    {/* <TableRow>
+                        <QuaterWidthTableCell>
+                            <OrderlySignCheckButton {...commonProps} />
+                        </QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
+                        <QuaterWidthTableCell></QuaterWidthTableCell>
+                    </TableRow> */}
                     <TableRow>
                         <QuaterWidthTableCell>
                             <Tooltip title="Show wallet-adapter widgets" placement="left">
@@ -164,37 +219,6 @@ const Index: NextPage = () => {
                             <SendV0TransactionDynamic />
                         </QuaterWidthTableCell>
                     </TableRow>
-                    <TableRow>
-                        <QuaterWidthTableCell>
-
-                            <DepositInitButton {...commonProps} />
-                        </QuaterWidthTableCell>
-                        <QuaterWidthTableCell></QuaterWidthTableCell>
-                        <QuaterWidthTableCell></QuaterWidthTableCell>
-                        <QuaterWidthTableCell></QuaterWidthTableCell>
-                    </TableRow>
-                    <TableRow>
-                        <QuaterWidthTableCell>
-                            <CommonValuesCheck {...commonProps} />
-                        </QuaterWidthTableCell>
-                        <QuaterWidthTableCell>
-                            <RegisterUserAccountButton {...commonProps} />
-                        </QuaterWidthTableCell>
-                        <QuaterWidthTableCell>
-                            <OrderlyKeyButton {...commonProps} />
-                        </QuaterWidthTableCell>
-                        <QuaterWidthTableCell>
-                            <WithdrawButton {...commonProps} />
-                        </QuaterWidthTableCell>
-                    </TableRow>
-                    {/* <TableRow>
-                        <QuaterWidthTableCell>
-                            <OrderlySignCheckButton {...commonProps} />
-                        </QuaterWidthTableCell>
-                        <QuaterWidthTableCell></QuaterWidthTableCell>
-                        <QuaterWidthTableCell></QuaterWidthTableCell>
-                        <QuaterWidthTableCell></QuaterWidthTableCell>
-                    </TableRow> */}
                 </TableBody>
             </Table>
         </>

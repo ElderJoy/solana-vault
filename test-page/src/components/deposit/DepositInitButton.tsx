@@ -3,7 +3,6 @@ import { CommonProps } from '../common';
 import { Button } from '@mui/material';
 import { useNotify } from '../notify';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { vaultProgram } from "../../anchor/setup";
 
 export const DepositInitButton: FC<CommonProps> = (props) => {
     const { publicKey, sendTransaction } = useWallet();
@@ -12,7 +11,7 @@ export const DepositInitButton: FC<CommonProps> = (props) => {
 
     const DepositInit = useCallback(async () => {
         try {
-            const transaction = await vaultProgram.methods.initialize().transaction();
+            const transaction = await props.vaultProgram!.methods.initialize().transaction();
 
             const transactionSignature = await sendTransaction(transaction, connection);
 
@@ -36,7 +35,7 @@ export const DepositInitButton: FC<CommonProps> = (props) => {
             variant="contained"
             color="primary"
             onClick={DepositInit}
-            disabled={!publicKey || !sendTransaction}
+            disabled={!publicKey || !sendTransaction || !props.vaultProgram}
         >
             Deposit Init
         </Button>

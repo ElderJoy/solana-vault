@@ -34,8 +34,8 @@ export const WithdrawButton: FC<CommonProps> = (props) => {
 
     const getWithdrawNonce = async (timestamp: BigInt) => {
         const messageToSign = Buffer.from(timestamp.toString() + "GET/v1/withdraw_nonce");
-        const signature = Buffer.from(nacl.sign.detached(messageToSign, props.keypair!.secretKey)).toString('base64');
-        const orderlyKey = 'ed25519:' + props.keypair?.publicKey.toBase58();
+        const signature = Buffer.from(nacl.sign.detached(messageToSign, props.orderlyKeypair!.secretKey)).toString('base64');
+        const orderlyKey = 'ed25519:' + props.orderlyKeypair?.publicKey.toBase58();
         const userAddress = encodeBase58(publicKey!.toBytes());
         const orderlyAccountId = calculateAccountId(userAddress, props.brokerId);
         console.log('Orderly account ID:', orderlyAccountId);
@@ -98,8 +98,8 @@ export const WithdrawButton: FC<CommonProps> = (props) => {
             const withdrawMessageToSign = timestamp.toString() + 'POST/v1/withdraw_request' + withdrawBodyString;
             console.log(withdrawMessageToSign);
 
-            const orderlySignature = Buffer.from(nacl.sign.detached(Buffer.from(withdrawMessageToSign), props.keypair!.secretKey)).toString('base64');
-            const orderlyKey = 'ed25519:' + props.keypair?.publicKey.toBase58();
+            const orderlySignature = Buffer.from(nacl.sign.detached(Buffer.from(withdrawMessageToSign), props.orderlyKeypair!.secretKey)).toString('base64');
+            const orderlyKey = 'ed25519:' + props.orderlyKeypair?.publicKey.toBase58();
             const orderlyAccountId = calculateAccountId(userAddress, props.brokerId);
             const headers = {
                 'orderly-account-id': orderlyAccountId,
@@ -131,7 +131,7 @@ export const WithdrawButton: FC<CommonProps> = (props) => {
             color="primary"
             onClick={withdraw}
             style={{ marginRight: '1rem' }}
-            disabled={!publicKey || !signMessage || !props.keypair}
+            disabled={!publicKey || !signMessage || !props.orderlyKeypair}
         >
             Withdraw Account
         </Button>
