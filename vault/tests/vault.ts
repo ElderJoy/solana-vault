@@ -64,28 +64,34 @@ describe("vault", () => {
   });
 
   it("initialize", async () => {
-    const tx = await program.methods.initialize().accounts({
+    const tx1 = await program.methods.initialize(new BN(125e7)).accounts({
       user: user.publicKey,
+      admin: admin.publicKey,
       userInfo: pda,
+      userDepositWallet: userTokenAccount,
+      adminDepositWallet: adminTokenAccount,
+      depositToken: token.publicKey,
+      tokenProgram: TOKEN_PROGRAM_ID,
     }).signers([user]).rpc();
-    console.log("Initialize transaction signature", tx);
+    console.log("Initialize transaction signature", tx1);
 
-    // should fail
-    try {
-      await program.methods.initialize().accounts({
-        user: user.publicKey,
-        userInfo: pda,
-      }).signers([user]).rpc();
-      assert.ok(false);
-    } catch (e) {
-    }
+    const tx2 = await program.methods.initialize(new BN(125e7)).accounts({
+      user: user.publicKey,
+      admin: admin.publicKey,
+      userInfo: pda,
+      userDepositWallet: userTokenAccount,
+      adminDepositWallet: adminTokenAccount,
+      depositToken: token.publicKey,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    }).signers([user]).rpc();
+    console.log("Initialize transaction signature", tx2);
   });
 
   it("deposit", async () => {
     const userTokenAccountBefore = await token.getAccountInfo(userTokenAccount);
-    assert.strictEqual(userTokenAccountBefore.amount.toNumber(), 1e10);
+    assert.strictEqual(userTokenAccountBefore.amount.toNumber(), 75e8);
 
-    const tx = await program.methods.deposit(new BN(5e9)).accounts({
+    const tx = await program.methods.deposit(new BN(25e8)).accounts({
       user: user.publicKey,
       admin: admin.publicKey,
       userInfo: pda,

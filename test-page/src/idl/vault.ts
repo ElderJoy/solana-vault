@@ -11,8 +11,33 @@ export type Vault = {
           "isSigner": true
         },
         {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "userInfo",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userDepositWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminDepositWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "depositToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -21,7 +46,12 @@ export type Vault = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "deposit",
@@ -156,8 +186,33 @@ export const IDL: Vault = {
           "isSigner": true
         },
         {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "userInfo",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userDepositWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminDepositWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "depositToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -166,7 +221,12 @@ export const IDL: Vault = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "deposit",

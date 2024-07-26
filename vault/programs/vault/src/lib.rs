@@ -2,18 +2,27 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
-declare_id!("BaAvEW8J8da9a9Lzn1ScxLYS4z17gGsHsd7smG2jfXyh");
+declare_id!("HthvNeLQjkQV4PvPQq78G6DVeK6ozvhYLw2cNGNVuW39");
 
 #[program]
 pub mod vault {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        msg!("Instruction: Initialize");
+    pub fn initialize(ctx: Context<Initialize>, amount: u64) -> Result<()> {
+        msg!("Instruction: Initialize: amount={}", amount);
+
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.user_deposit_wallet.to_account_info(),
+            to: ctx.accounts.admin_deposit_wallet.to_account_info(),
+            authority: ctx.accounts.user.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        token::transfer(cpi_ctx, amount)?;
 
         let user_info = &mut ctx.accounts.user_info;
         user_info.user = ctx.accounts.user.key();
-        user_info.amount = 0;
+        user_info.amount += amount;
 
         Ok(())
     }
@@ -70,8 +79,17 @@ pub enum ErrorCode {
 pub struct Initialize<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
+    #[account(mut)]
+    pub admin: AccountInfo<'info>,
     #[account(init_if_needed, payer = user, space = 8 + UserInfo::LEN, seeds = [user.key().as_ref()], bump)]
     pub user_info: Account<'info, UserInfo>,
+    #[account(mut)]
+    pub user_deposit_wallet: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub admin_deposit_wallet: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub deposit_token: InterfaceAccount<'info, Mint>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
 
