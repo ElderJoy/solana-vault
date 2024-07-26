@@ -66,12 +66,7 @@ describe("vault", () => {
   it("initialize", async () => {
     const tx = await program.methods.initialize().accounts({
       user: user.publicKey,
-      admin: admin.publicKey,
       userInfo: pda,
-      userDepositWallet: userTokenAccount,
-      adminDepositWallet: adminTokenAccount,
-      depositToken: token.publicKey,
-      tokenProgram: TOKEN_PROGRAM_ID,
     }).signers([user]).rpc();
     console.log("Initialize transaction signature", tx);
 
@@ -79,12 +74,7 @@ describe("vault", () => {
     try {
       await program.methods.initialize().accounts({
         user: user.publicKey,
-        admin: admin.publicKey,
         userInfo: pda,
-        userDepositWallet: userTokenAccount,
-        adminDepositWallet: adminTokenAccount,
-        depositToken: token.publicKey,
-        tokenProgram: TOKEN_PROGRAM_ID,
       }).signers([user]).rpc();
       assert.ok(false);
     } catch (e) {

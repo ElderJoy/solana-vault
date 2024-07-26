@@ -70,17 +70,8 @@ pub enum ErrorCode {
 pub struct Initialize<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-    #[account(mut)]
-    pub admin: AccountInfo<'info>,
-    #[account(init, payer = user, space = 8 + UserInfo::LEN, seeds = [user.key().as_ref()], bump)]
+    #[account(init_if_needed, payer = user, space = 8 + UserInfo::LEN, seeds = [user.key().as_ref()], bump)]
     pub user_info: Account<'info, UserInfo>,
-    #[account(mut)]
-    pub user_deposit_wallet: InterfaceAccount<'info, TokenAccount>,
-    #[account(mut)]
-    pub admin_deposit_wallet: InterfaceAccount<'info, TokenAccount>,
-    #[account(mut)]
-    pub deposit_token: InterfaceAccount<'info, Mint>,
-    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
 

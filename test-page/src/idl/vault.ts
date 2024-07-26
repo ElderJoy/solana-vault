@@ -11,33 +11,8 @@ export type Vault = {
           "isSigner": true
         },
         {
-          "name": "admin",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "userInfo",
           "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "userDepositWallet",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "adminDepositWallet",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "depositToken",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
           "isSigner": false
         },
         {
@@ -181,33 +156,8 @@ export const IDL: Vault = {
           "isSigner": true
         },
         {
-          "name": "admin",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "userInfo",
           "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "userDepositWallet",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "adminDepositWallet",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "depositToken",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
           "isSigner": false
         },
         {

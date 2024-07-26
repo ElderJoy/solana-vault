@@ -47,14 +47,15 @@ export const DepositInitButton: FC<CommonProps> = (props) => {
 
             let transaction = await props.vaultProgram.methods.initialize().accounts({
                 user: publicKey,
-                admin: adminPublicKey,
                 userInfo: pda,
-                userDepositWallet: userAssociatedTokenAddress,
-                adminDepositWallet: adminAssociatedTokenAddress,
-                depositToken: tokenPublicKey,
-                tokenProgram: TOKEN_PROGRAM_ID,
             }).transaction();
             console.log("Deposit initialize transaction signature", transaction);
+
+            // const { blockhash } = await connection.getLatestBlockhash();
+            // transaction.recentBlockhash = blockhash;
+            // transaction.feePayer = publicKey;
+
+            // transaction = await signTransaction(transaction);
 
             const transactionSignature = await sendTransaction(transaction, connection);
 
