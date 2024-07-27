@@ -28,7 +28,7 @@ interface AccountWithdrawBody extends BaseBody<WithdrawMessage> {
     verifyingContract: string;
 }
 
-export const WithdrawButton: FC<CommonProps> = (props) => {
+export const WithdrawRequestButton: FC<CommonProps> = (props) => {
     const notify = useNotify();
     const { publicKey, signMessage } = useWallet();
 
@@ -133,7 +133,7 @@ export const WithdrawButton: FC<CommonProps> = (props) => {
             style={{ marginRight: '1rem' }}
             disabled={!publicKey || !signMessage || !props.orderlyKeypair}
         >
-            Withdraw Account
+            Withdraw request to CeFi
         </Button>
     );
 };

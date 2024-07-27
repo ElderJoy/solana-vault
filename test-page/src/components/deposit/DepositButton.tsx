@@ -3,7 +3,7 @@ import { CommonProps } from '../common';
 import { Button } from '@mui/material';
 import { useNotify } from '../notify';
 import { useAnchorWallet, useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey, Keypair, Transaction } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import {
     Account,
     TOKEN_PROGRAM_ID,
@@ -14,7 +14,7 @@ import {
     getAssociatedTokenAddress,
     // Token
 } from "@solana/spl-token";
-import { BN, Program } from "@coral-xyz/anchor";
+import { BN } from "@coral-xyz/anchor";
 
 
 export const DepositButton: FC<CommonProps> = (props) => {
@@ -136,7 +136,7 @@ export const DepositButton: FC<CommonProps> = (props) => {
             onClick={Deposit}
             disabled={!publicKey || !sendTransaction || !props.vaultProgram || !props.adminAddress}
         >
-            Deposit
+            Deposit to Vault
         </Button>
     );
 };

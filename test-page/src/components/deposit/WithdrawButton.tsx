@@ -3,22 +3,22 @@ import { CommonProps } from '../common';
 import { Button } from '@mui/material';
 import { useNotify } from '../notify';
 import { useAnchorWallet, useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey, Keypair } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import {
     TOKEN_PROGRAM_ID,
     getAssociatedTokenAddress,
     // Token
 } from "@solana/spl-token";
-import { BN, Program } from "@coral-xyz/anchor";
+import { BN } from "@coral-xyz/anchor";
 
 
-export const DepositButton2: FC<CommonProps> = (props) => {
+export const WithdrawButton: FC<CommonProps> = (props) => {
     const { publicKey, sendTransaction, signTransaction } = useWallet();
     const wallet = useAnchorWallet();
     const { connection } = useConnection();
     const notify = useNotify();
 
-    const Deposit = useCallback(async () => {
+    const Withdraw = useCallback(async () => {
         try {
             if (!publicKey || !wallet || !signTransaction || !sendTransaction || !props.testUsdcTokenAddress || !props.vaultProgram || !props.adminAddress) {
                 throw new Error('Wallet, testUsdcTokenAddress, vaultProgram, or adminAddress not available');
@@ -47,7 +47,7 @@ export const DepositButton2: FC<CommonProps> = (props) => {
 
             const { blockhash } = await connection.getLatestBlockhash();
 
-            let transaction = await props.vaultProgram.methods.deposit(new BN(1000)).accounts({
+            let transaction = await props.vaultProgram.methods.withdraw(new BN(1000)).accounts({
                 user: publicKey,
                 admin: adminPublicKey,
                 userInfo: pda,
@@ -56,13 +56,13 @@ export const DepositButton2: FC<CommonProps> = (props) => {
                 depositToken: tokenPublicKey,
                 tokenProgram: TOKEN_PROGRAM_ID,
             }).transaction();
-            console.log("Deposit transaction signature", transaction);
+            console.log("Withdraw transaction signature", transaction);
 
             const transactionSignature = await sendTransaction(transaction, connection);
 
             console.log(`View on explorer: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`);
 
-            notify('success', 'Deposit init successful');
+            notify('success', 'Withdraw successful');
         } catch (error) {
             console.log(error);
             if (error instanceof Error) {
@@ -79,10 +79,10 @@ export const DepositButton2: FC<CommonProps> = (props) => {
         <Button
             variant="contained"
             color="primary"
-            onClick={Deposit}
+            onClick={Withdraw}
             disabled={!publicKey || !sendTransaction || !props.vaultProgram || !props.adminAddress}
         >
-            Deposit 2
+            Withdraw from Vault
         </Button>
     );
 };

@@ -8,11 +8,12 @@ import { CeFiBaseUrlView } from '../components/withdraw/CeFiBaseUrl';
 import { CommonValuesCheck } from '../components/withdraw/CommonValuesCheck';
 import { RegisterUserAccountButton } from '../components/withdraw/RegisterUserAccountButton';
 import { OrderlyKeyButton } from '../components/withdraw/OrderlyKeyButton';
-import { WithdrawButton } from '../components/withdraw/WithdrawButton';
+import { WithdrawRequestButton } from '../components/withdraw/WithdrawRequestButton';
 import * as solanaWeb3 from "@solana/web3.js"
 import { OrderlySignCheckButton } from '../components/withdraw/OrderlySignCheckButton';
 import BoxWithTitle from '../components/BoxWithTitle';
 import { DepositButton } from '../components/deposit/DepositButton';
+import { WithdrawButton } from '../components/deposit/WithdrawButton';
 
 const MaterialUIWalletMultiButtonDynamic = dynamic(
     async () => (await import('@solana/wallet-adapter-material-ui')).WalletMultiButton,
@@ -148,6 +149,7 @@ const Index: NextPage = () => {
                             <DepositButton {...commonProps} />
                         </QuaterWidthTableCell>
                         <QuaterWidthTableCell>
+                            <WithdrawButton {...commonProps} />
                         </QuaterWidthTableCell>
                         <QuaterWidthTableCell></QuaterWidthTableCell>
                         <QuaterWidthTableCell></QuaterWidthTableCell>
@@ -163,7 +165,7 @@ const Index: NextPage = () => {
                             <OrderlyKeyButton {...commonProps} />
                         </QuaterWidthTableCell>
                         <QuaterWidthTableCell>
-                            <WithdrawButton {...commonProps} />
+                            <WithdrawRequestButton {...commonProps} />
                         </QuaterWidthTableCell>
                     </TableRow>
                     {/* <TableRow>
