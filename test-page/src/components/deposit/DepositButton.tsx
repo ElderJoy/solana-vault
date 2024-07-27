@@ -3,9 +3,14 @@ import { CommonProps } from '../common';
 import { Button } from '@mui/material';
 import { useNotify } from '../notify';
 import { useAnchorWallet, useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey, Keypair } from '@solana/web3.js';
+import { PublicKey, Keypair, Transaction } from '@solana/web3.js';
 import {
+    Account,
     TOKEN_PROGRAM_ID,
+    TokenAccountNotFoundError,
+    TokenInvalidAccountOwnerError,
+    createAssociatedTokenAccountInstruction,
+    getAccount,
     getAssociatedTokenAddress,
     // Token
 } from "@solana/spl-token";
@@ -18,6 +23,57 @@ export const DepositButton: FC<CommonProps> = (props) => {
     const { connection } = useConnection();
     const notify = useNotify();
 
+    const getUserTokenAccount = useCallback(async (mint: PublicKey, owner: PublicKey) => {
+        const associatedToken = await getAssociatedTokenAddress(
+            mint,
+            owner
+        );
+        let account: Account;
+        try {
+            account = await getAccount(connection, associatedToken, 'confirmed');
+        } catch (error: unknown) {
+            if (error instanceof TokenAccountNotFoundError || error instanceof TokenInvalidAccountOwnerError) {
+                throw new Error('User token account not found');
+            } else {
+                throw error;
+            }
+        }
+
+        return account;
+    }, [publicKey, connection, sendTransaction, notify]);
+
+    const getOrCreateAssociatedTokenAccount = useCallback(async (mint: PublicKey, owner: PublicKey) => {
+        const associatedToken = await getAssociatedTokenAddress(
+            mint,
+            owner
+        );
+        let account: Account;
+        try {
+            account = await getAccount(connection, associatedToken, 'confirmed');
+        } catch (error: unknown) {
+            if (error instanceof TokenAccountNotFoundError || error instanceof TokenInvalidAccountOwnerError) {
+                try {
+                    const transaction = new Transaction().add(
+                        createAssociatedTokenAccountInstruction(
+                            publicKey!,
+                            associatedToken,
+                            owner,
+                            mint
+                        )
+                    );
+
+                    await sendTransaction(transaction, connection);
+                } catch (error: unknown) {
+                }
+                account = await getAccount(connection, associatedToken, 'confirmed');
+            } else {
+                throw error;
+            }
+        }
+
+        return account;
+    }, [publicKey, connection, sendTransaction, notify]);
+
     const Deposit = useCallback(async () => {
         try {
             if (!publicKey || !wallet || !signTransaction || !sendTransaction || !props.testUsdcTokenAddress || !props.vaultProgram || !props.adminAddress) {
@@ -26,14 +82,13 @@ export const DepositButton: FC<CommonProps> = (props) => {
 
             const tokenPublicKey = new PublicKey(props.testUsdcTokenAddress);
             const adminPublicKey = new PublicKey(props.adminAddress);
-            const adminAssociatedTokenAddress = await getAssociatedTokenAddress(
-                tokenPublicKey,
-                adminPublicKey
-            );
-            const userAssociatedTokenAddress = await getAssociatedTokenAddress(
-                tokenPublicKey,
-                publicKey
-            );
+
+            const userTokenAccount = await getUserTokenAccount(tokenPublicKey, publicKey);
+            const userAssociatedTokenAddress = userTokenAccount.address;
+
+            const adminTokenAccount = await getOrCreateAssociatedTokenAccount(tokenPublicKey, adminPublicKey);
+            const adminAssociatedTokenAddress = adminTokenAccount.address;
+
             const [pda] = PublicKey.findProgramAddressSync(
                 [publicKey.toBuffer()],
                 props.vaultProgram.programId
@@ -43,9 +98,8 @@ export const DepositButton: FC<CommonProps> = (props) => {
             console.log(`adminPublicKey: ${adminPublicKey.toBase58()}`);
             console.log(`adminAssociatedTokenAddress: ${adminAssociatedTokenAddress.toBase58()}`);
             console.log(`userAssociatedTokenAddress: ${userAssociatedTokenAddress.toBase58()}`);
+            console.log(`user token amount: ${userTokenAccount.amount.toString()}`);
             console.log(`pda: ${pda.toBase58()}`);
-
-            const { blockhash } = await connection.getLatestBlockhash();
 
             let transaction = await props.vaultProgram.methods.deposit(new BN(1000)).accounts({
                 user: publicKey,
@@ -62,7 +116,7 @@ export const DepositButton: FC<CommonProps> = (props) => {
 
             console.log(`View on explorer: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`);
 
-            notify('success', 'Deposit init successful');
+            notify('success', 'Deposit successful');
         } catch (error) {
             console.log(error);
             if (error instanceof Error) {

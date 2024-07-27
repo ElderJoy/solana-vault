@@ -2,33 +2,14 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
-declare_id!("HthvNeLQjkQV4PvPQq78G6DVeK6ozvhYLw2cNGNVuW39");
+declare_id!("2sXiDR5khwCMTC6Gusk9q1oDvpQ4FYrj9XYhkFg4mVAK");
 
 #[program]
 pub mod vault {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>, amount: u64) -> Result<()> {
-        msg!("Instruction: Initialize: amount={}", amount);
-
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.user_deposit_wallet.to_account_info(),
-            to: ctx.accounts.admin_deposit_wallet.to_account_info(),
-            authority: ctx.accounts.user.to_account_info(),
-        };
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        token::transfer(cpi_ctx, amount)?;
-
-        let user_info = &mut ctx.accounts.user_info;
-        user_info.user = ctx.accounts.user.key();
-        user_info.amount += amount;
-
-        Ok(())
-    }
-
     pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
-        msg!("Instruction: Deposit");
+        msg!("Instruction: Deposit: amount={}", amount);
 
         let cpi_accounts = Transfer {
             from: ctx.accounts.user_deposit_wallet.to_account_info(),
@@ -40,7 +21,16 @@ pub mod vault {
         token::transfer(cpi_ctx, amount)?;
 
         let user_info = &mut ctx.accounts.user_info;
+
+        if user_info.user == Pubkey::default() {
+            // PDA just created, let's set the user field
+            msg!("PDA just created, setting user field");
+            user_info.user = ctx.accounts.user.key();
+        } else if user_info.user != ctx.accounts.user.key() {
+            return Err(ErrorCode::PdaBelongsToAnotherUser.into());
+        }
         user_info.amount += amount;
+        msg!("User deposit balance: {}", user_info.amount);
 
         Ok(())
     }
@@ -64,6 +54,7 @@ pub mod vault {
         token::transfer(cpi_ctx, amount)?;
 
         user_info.amount -= amount;
+        msg!("User deposit balance: {}", user_info.amount);
 
         Ok(())
     }
@@ -73,10 +64,12 @@ pub mod vault {
 pub enum ErrorCode {
     #[msg("deposited fundc are insufficient")]
     InsufficientFunds,
+    #[msg("pda belongs to another user")]
+    PdaBelongsToAnotherUser,
 }
 
 #[derive(Accounts)]
-pub struct Initialize<'info> {
+pub struct Deposit<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(mut)]
@@ -91,23 +84,6 @@ pub struct Initialize<'info> {
     pub deposit_token: InterfaceAccount<'info, Mint>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct Deposit<'info> {
-    #[account(mut)]
-    pub user: Signer<'info>,
-    #[account(mut)]
-    pub admin: AccountInfo<'info>,
-    #[account(mut, has_one = user)]
-    pub user_info: Account<'info, UserInfo>,
-    #[account(mut)]
-    pub user_deposit_wallet: InterfaceAccount<'info, TokenAccount>,
-    #[account(mut)]
-    pub admin_deposit_wallet: InterfaceAccount<'info, TokenAccount>,
-    #[account(mut)]
-    pub deposit_token: InterfaceAccount<'info, Mint>,
-    pub token_program: Interface<'info, TokenInterface>,
 }
 
 #[derive(Accounts)]

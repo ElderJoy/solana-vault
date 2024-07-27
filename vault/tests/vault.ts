@@ -63,35 +63,11 @@ describe("vault", () => {
     await token.mintTo(userTokenAccount, admin.publicKey, [admin], 1e10);
   });
 
-  it("initialize", async () => {
-    const tx1 = await program.methods.initialize(new BN(125e7)).accounts({
-      user: user.publicKey,
-      admin: admin.publicKey,
-      userInfo: pda,
-      userDepositWallet: userTokenAccount,
-      adminDepositWallet: adminTokenAccount,
-      depositToken: token.publicKey,
-      tokenProgram: TOKEN_PROGRAM_ID,
-    }).signers([user]).rpc();
-    console.log("Initialize transaction signature", tx1);
-
-    const tx2 = await program.methods.initialize(new BN(125e7)).accounts({
-      user: user.publicKey,
-      admin: admin.publicKey,
-      userInfo: pda,
-      userDepositWallet: userTokenAccount,
-      adminDepositWallet: adminTokenAccount,
-      depositToken: token.publicKey,
-      tokenProgram: TOKEN_PROGRAM_ID,
-    }).signers([user]).rpc();
-    console.log("Initialize transaction signature", tx2);
-  });
-
   it("deposit", async () => {
     const userTokenAccountBefore = await token.getAccountInfo(userTokenAccount);
-    assert.strictEqual(userTokenAccountBefore.amount.toNumber(), 75e8);
+    assert.strictEqual(userTokenAccountBefore.amount.toNumber(), 1e10);
 
-    const tx = await program.methods.deposit(new BN(25e8)).accounts({
+    const tx = await program.methods.deposit(new BN(5e9)).accounts({
       user: user.publicKey,
       admin: admin.publicKey,
       userInfo: pda,

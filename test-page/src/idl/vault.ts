@@ -3,7 +3,7 @@ export type Vault = {
   "name": "vault",
   "instructions": [
     {
-      "name": "initialize",
+      "name": "deposit",
       "accounts": [
         {
           "name": "user",
@@ -42,52 +42,6 @@ export type Vault = {
         },
         {
           "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "deposit",
-      "accounts": [
-        {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "admin",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "userInfo",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "userDepositWallet",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "adminDepositWallet",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "depositToken",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -169,6 +123,11 @@ export type Vault = {
       "code": 6000,
       "name": "InsufficientFunds",
       "msg": "deposited fundc are insufficient"
+    },
+    {
+      "code": 6001,
+      "name": "PdaBelongsToAnotherUser",
+      "msg": "pda belongs to another user"
     }
   ]
 };
@@ -178,7 +137,7 @@ export const IDL: Vault = {
   "name": "vault",
   "instructions": [
     {
-      "name": "initialize",
+      "name": "deposit",
       "accounts": [
         {
           "name": "user",
@@ -217,52 +176,6 @@ export const IDL: Vault = {
         },
         {
           "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "deposit",
-      "accounts": [
-        {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "admin",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "userInfo",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "userDepositWallet",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "adminDepositWallet",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "depositToken",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -344,6 +257,11 @@ export const IDL: Vault = {
       "code": 6000,
       "name": "InsufficientFunds",
       "msg": "deposited fundc are insufficient"
+    },
+    {
+      "code": 6001,
+      "name": "PdaBelongsToAnotherUser",
+      "msg": "pda belongs to another user"
     }
   ]
 };
