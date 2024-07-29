@@ -86,6 +86,25 @@ describe("vault", () => {
         // console.log("User token account amount", userTokenAccountInfo.amount.toString());
     });
 
+    it("initialize", async () => {
+        const tx = await program.methods.initialize().accounts({
+            depositToken: token,
+            vaultDepositAuthority,
+            user: user.publicKey,
+        }).signers([user]).rpc();
+        console.log("Initialize transaction signature", tx);
+
+        try {
+            await program.methods.initialize().accounts({
+                depositToken: token,
+                vaultDepositAuthority,
+                user: user.publicKey,
+            }).signers([user]).rpc();
+            assert.fail("Should have thrown an error");
+        } catch (error) {
+        }
+    });
+
     it("deposit", async () => {
         const userTokenAccountBefore = await getAccount(connection, userTokenAccount);
         assert.strictEqual(userTokenAccountBefore.amount.toString(), "10000000000");

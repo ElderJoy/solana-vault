@@ -3,18 +3,39 @@ export type Vault = {
   "name": "vault",
   "instructions": [
     {
-      "name": "deposit",
+      "name": "initialize",
       "accounts": [
+        {
+          "name": "depositToken",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultDepositAuthority",
+          "isMut": true,
+          "isSigner": false
+        },
         {
           "name": "user",
           "isMut": true,
           "isSigner": true
         },
         {
-          "name": "admin",
-          "isMut": true,
+          "name": "associatedTokenProgram",
+          "isMut": false,
           "isSigner": false
         },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "deposit",
+      "accounts": [
         {
           "name": "userInfo",
           "isMut": true,
@@ -26,17 +47,32 @@ export type Vault = {
           "isSigner": false
         },
         {
-          "name": "adminDepositWallet",
+          "name": "vaultDepositAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultDepositWallet",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "depositToken",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -58,12 +94,7 @@ export type Vault = {
       "accounts": [
         {
           "name": "user",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "admin",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -77,13 +108,18 @@ export type Vault = {
           "isSigner": false
         },
         {
-          "name": "adminDepositWallet",
+          "name": "vaultDepositAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultDepositWallet",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "depositToken",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -116,6 +152,22 @@ export type Vault = {
           }
         ]
       }
+    },
+    {
+      "name": "vaultDepositAuthority",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "depositToken",
+            "type": "publicKey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
     }
   ],
   "errors": [
@@ -137,18 +189,39 @@ export const IDL: Vault = {
   "name": "vault",
   "instructions": [
     {
-      "name": "deposit",
+      "name": "initialize",
       "accounts": [
+        {
+          "name": "depositToken",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultDepositAuthority",
+          "isMut": true,
+          "isSigner": false
+        },
         {
           "name": "user",
           "isMut": true,
           "isSigner": true
         },
         {
-          "name": "admin",
-          "isMut": true,
+          "name": "associatedTokenProgram",
+          "isMut": false,
           "isSigner": false
         },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "deposit",
+      "accounts": [
         {
           "name": "userInfo",
           "isMut": true,
@@ -160,17 +233,32 @@ export const IDL: Vault = {
           "isSigner": false
         },
         {
-          "name": "adminDepositWallet",
+          "name": "vaultDepositAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultDepositWallet",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "depositToken",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -192,12 +280,7 @@ export const IDL: Vault = {
       "accounts": [
         {
           "name": "user",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "admin",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -211,13 +294,18 @@ export const IDL: Vault = {
           "isSigner": false
         },
         {
-          "name": "adminDepositWallet",
+          "name": "vaultDepositAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultDepositWallet",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "depositToken",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -247,6 +335,22 @@ export const IDL: Vault = {
           {
             "name": "amount",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "vaultDepositAuthority",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "depositToken",
+            "type": "publicKey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
           }
         ]
       }

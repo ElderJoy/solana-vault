@@ -1,19 +1,39 @@
-import { FormControlLabel, Switch, Table, TableBody, TableCell, TableCellProps, TableRow, Tooltip } from '@mui/material';
+import {
+    FormControlLabel,
+    Switch,
+    Table,
+    TableBody,
+    TableCell,
+    TableCellProps,
+    TableRow,
+    Tooltip,
+} from '@mui/material';
 import type { NextPage } from 'next';
 import dynamic from 'next/dynamic';
 import React from 'react';
 import { useAutoConnect } from '../components/wallet/AutoConnectProvider';
-import { DEFAULT_VAULT_PROGRAM_ADDRESS, brockerIds, chainIds, CommonProps, getCeFiBaseURL, getVaultProgram, localCeFiMockUrl, DEFAULT_USDC_TOKEN_ADDRESS, DEFAULT_ADMIN_ADDRESS } from '../components/common';
+import {
+    DEFAULT_VAULT_PROGRAM_ADDRESS,
+    brockerIds,
+    chainIds,
+    CommonProps,
+    getCeFiBaseURL,
+    getVaultProgram,
+    localCeFiMockUrl,
+    DEFAULT_USDC_TOKEN_ADDRESS,
+    DEFAULT_ADMIN_ADDRESS,
+} from '../components/common';
 import { CeFiBaseUrlView } from '../components/withdraw/CeFiBaseUrl';
 import { CommonValuesCheck } from '../components/withdraw/CommonValuesCheck';
 import { RegisterUserAccountButton } from '../components/withdraw/RegisterUserAccountButton';
 import { OrderlyKeyButton } from '../components/withdraw/OrderlyKeyButton';
 import { WithdrawRequestButton } from '../components/withdraw/WithdrawRequestButton';
-import * as solanaWeb3 from "@solana/web3.js"
+import * as solanaWeb3 from '@solana/web3.js';
 import { OrderlySignCheckButton } from '../components/withdraw/OrderlySignCheckButton';
 import BoxWithTitle from '../components/BoxWithTitle';
 import { DepositButton } from '../components/deposit/DepositButton';
 import { WithdrawButton } from '../components/deposit/WithdrawButton';
+import { InitializeButton } from '../components/deposit/InitializeButton';
 
 const MaterialUIWalletMultiButtonDynamic = dynamic(
     async () => (await import('@solana/wallet-adapter-material-ui')).WalletMultiButton,
@@ -58,15 +78,21 @@ const Index: NextPage = () => {
     const [brokerId, setBrokerId] = React.useState<string>(brockerIds[0]);
     const [chainId, setChainId] = React.useState<BigInt>(BigInt(chainIds[2]));
     const [orderlyKeypair, setOrderlyKeypair] = React.useState<solanaWeb3.Keypair>();
-    const [testUsdcTokenAddress, setTestUsdcTokenAddress] = React.useState<string>(process.env.TEST_USDC_TOKEN_ADDRESS ? process.env.TEST_USDC_TOKEN_ADDRESS : DEFAULT_USDC_TOKEN_ADDRESS);
-    const [vaultProgramAddress, setVaultProgramAddress] = React.useState<string>(process.env.VAULT_PROGRAM_ADDRESS ? process.env.VAULT_PROGRAM_ADDRESS : DEFAULT_VAULT_PROGRAM_ADDRESS);
+    const [testUsdcTokenAddress, setTestUsdcTokenAddress] = React.useState<string>(
+        process.env.TEST_USDC_TOKEN_ADDRESS ? process.env.TEST_USDC_TOKEN_ADDRESS : DEFAULT_USDC_TOKEN_ADDRESS
+    );
+    const [vaultProgramAddress, setVaultProgramAddress] = React.useState<string>(
+        process.env.VAULT_PROGRAM_ADDRESS ? process.env.VAULT_PROGRAM_ADDRESS : DEFAULT_VAULT_PROGRAM_ADDRESS
+    );
     const [vaultProgram, setVaultProgram] = React.useState(getVaultProgram(vaultProgramAddress));
-    const [adminAddress, setAdminAddress] = React.useState<string>(process.env.ADMIN_ADDRESS ? process.env.ADMIN_ADDRESS : DEFAULT_ADMIN_ADDRESS);
+    const [adminAddress, setAdminAddress] = React.useState<string>(
+        process.env.ADMIN_ADDRESS ? process.env.ADMIN_ADDRESS : DEFAULT_ADMIN_ADDRESS
+    );
 
     const setVaultProgramAddressAndProgram = (address: string) => {
         setVaultProgramAddress(address);
         setVaultProgram(getVaultProgram(address));
-    }
+    };
 
     const commonProps: CommonProps = {
         cefiBaseURL,
@@ -121,7 +147,10 @@ const Index: NextPage = () => {
                                             name="LocalCeFiMock"
                                             color="secondary"
                                             checked={cefiBaseURL === localCeFiMockUrl}
-                                            onChange={(event, checked) => { if (checked) setCefiBaseUrl(localCeFiMockUrl); else setCefiBaseUrl(getCeFiBaseURL()); }}
+                                            onChange={(event, checked) => {
+                                                if (checked) setCefiBaseUrl(localCeFiMockUrl);
+                                                else setCefiBaseUrl(getCeFiBaseURL());
+                                            }}
                                         />
                                     }
                                     label="Local CeFi mock"
@@ -134,24 +163,32 @@ const Index: NextPage = () => {
                     </TableRow>
                     <TableRow>
                         <QuaterWidthTableCell>
-                            <BoxWithTitle title="Vault program address">{commonProps.vaultProgramAddress ? commonProps.vaultProgramAddress : 'not set'}</BoxWithTitle>
+                            <BoxWithTitle title="Vault program address">
+                                {commonProps.vaultProgramAddress ? commonProps.vaultProgramAddress : 'not set'}
+                            </BoxWithTitle>
                         </QuaterWidthTableCell>
                         <QuaterWidthTableCell>
-                            <BoxWithTitle title="Test USDC token address">{commonProps.testUsdcTokenAddress ? commonProps.testUsdcTokenAddress : 'not set'}</BoxWithTitle>
+                            <BoxWithTitle title="Test USDC token address">
+                                {commonProps.testUsdcTokenAddress ? commonProps.testUsdcTokenAddress : 'not set'}
+                            </BoxWithTitle>
                         </QuaterWidthTableCell>
                         <QuaterWidthTableCell>
-                            <BoxWithTitle title="Admin address">{commonProps.adminAddress ? commonProps.adminAddress : 'not set'}</BoxWithTitle>
+                            <BoxWithTitle title="Admin address">
+                                {commonProps.adminAddress ? commonProps.adminAddress : 'not set'}
+                            </BoxWithTitle>
                         </QuaterWidthTableCell>
                         <QuaterWidthTableCell></QuaterWidthTableCell>
                     </TableRow>
                     <TableRow>
+                        <QuaterWidthTableCell>
+                            <InitializeButton {...commonProps} />
+                        </QuaterWidthTableCell>
                         <QuaterWidthTableCell>
                             <DepositButton {...commonProps} />
                         </QuaterWidthTableCell>
                         <QuaterWidthTableCell>
                             <WithdrawButton {...commonProps} />
                         </QuaterWidthTableCell>
-                        <QuaterWidthTableCell></QuaterWidthTableCell>
                         <QuaterWidthTableCell></QuaterWidthTableCell>
                     </TableRow>
                     <TableRow>
@@ -185,7 +222,9 @@ const Index: NextPage = () => {
                                             name="ShowWalletAdapterWidgets"
                                             color="secondary"
                                             checked={showWalletAdapterWidgets === true}
-                                            onChange={(event, checked) => { setShowWalletAdapterWidgets(checked); }}
+                                            onChange={(event, checked) => {
+                                                setShowWalletAdapterWidgets(checked);
+                                            }}
                                         />
                                     }
                                     label="Show wallet-adapter widgets"

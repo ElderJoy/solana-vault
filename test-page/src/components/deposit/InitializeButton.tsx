@@ -3,12 +3,13 @@ import { CommonProps } from '../common';
 import { Button } from '@mui/material';
 import { useNotify } from '../notify';
 import { useAnchorWallet, useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import {
     Account,
     TOKEN_PROGRAM_ID,
     TokenAccountNotFoundError,
     TokenInvalidAccountOwnerError,
+    createAssociatedTokenAccountInstruction,
     getAccount,
     getAssociatedTokenAddress,
     getAssociatedTokenAddressSync,
@@ -16,49 +17,19 @@ import {
 } from '@solana/spl-token';
 import { BN } from '@coral-xyz/anchor';
 
-export const WithdrawButton: FC<CommonProps> = (props) => {
+export const InitializeButton: FC<CommonProps> = (props) => {
     const { publicKey, sendTransaction, signTransaction } = useWallet();
     const wallet = useAnchorWallet();
     const { connection } = useConnection();
     const notify = useNotify();
 
-    const getUserTokenAccount = useCallback(
-        async (mint: PublicKey, owner: PublicKey) => {
-            const associatedToken = await getAssociatedTokenAddress(mint, owner);
-            let account: Account;
-            try {
-                account = await getAccount(connection, associatedToken, 'confirmed');
-            } catch (error: unknown) {
-                if (error instanceof TokenAccountNotFoundError || error instanceof TokenInvalidAccountOwnerError) {
-                    throw new Error('User token account not found');
-                } else {
-                    throw error;
-                }
-            }
-
-            return account;
-        },
-        [publicKey, connection, sendTransaction, notify]
-    );
-
-    const Withdraw = useCallback(async () => {
+    const Initialize = useCallback(async () => {
         try {
-            if (
-                !publicKey ||
-                !wallet ||
-                !signTransaction ||
-                !sendTransaction ||
-                !props.testUsdcTokenAddress ||
-                !props.vaultProgram ||
-                !props.adminAddress
-            ) {
+            if (!publicKey || !wallet || !sendTransaction || !props.testUsdcTokenAddress || !props.vaultProgram) {
                 throw new Error('Wallet, testUsdcTokenAddress, vaultProgram, or adminAddress not available');
             }
 
             const tokenPublicKey = new PublicKey(props.testUsdcTokenAddress);
-
-            const userTokenAccount = await getUserTokenAccount(tokenPublicKey, publicKey);
-            const userDepositWallet = userTokenAccount.address;
 
             const [vaultDepositAuthority] = PublicKey.findProgramAddressSync(
                 [Buffer.from('vault_deposit_authority'), tokenPublicKey.toBuffer()],
@@ -67,34 +38,24 @@ export const WithdrawButton: FC<CommonProps> = (props) => {
 
             const vaultDepositWallet = getAssociatedTokenAddressSync(tokenPublicKey, vaultDepositAuthority, true);
 
-            const [pda] = PublicKey.findProgramAddressSync([publicKey.toBuffer()], props.vaultProgram.programId);
-
             console.log(`tokenPublicKey: ${tokenPublicKey.toBase58()}`);
-            console.log(`userDepositWallet: ${userDepositWallet.toBase58()}`);
-            console.log(`user token amount: ${userTokenAccount.amount.toString()}`);
-            console.log(`pda: ${pda.toBase58()}`);
             console.log(`vaultDepositAuthority: ${vaultDepositAuthority.toBase58()}`);
-            console.log(`vaultDepositWallet: ${vaultDepositWallet.toBase58()}`);
 
             let transaction = await props.vaultProgram.methods
-                .withdraw(new BN(1000))
+                .initialize()
                 .accounts({
-                    user: publicKey,
-                    userInfo: pda,
-                    userDepositWallet,
-                    vaultDepositAuthority,
-                    vaultDepositWallet,
                     depositToken: tokenPublicKey,
-                    tokenProgram: TOKEN_PROGRAM_ID,
+                    vaultDepositAuthority,
+                    user: publicKey,
                 })
                 .transaction();
-            console.log('Withdraw transaction signature', transaction);
+            console.log('Initialize transaction signature', transaction);
 
             const transactionSignature = await sendTransaction(transaction, connection);
 
             console.log(`View on explorer: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`);
 
-            notify('success', 'Withdraw successful');
+            notify('success', 'Initialize successful');
         } catch (error) {
             console.log(error);
             if (error instanceof Error) {
@@ -111,10 +72,10 @@ export const WithdrawButton: FC<CommonProps> = (props) => {
         <Button
             variant="contained"
             color="primary"
-            onClick={Withdraw}
+            onClick={Initialize}
             disabled={!publicKey || !sendTransaction || !props.vaultProgram || !props.adminAddress}
         >
-            Withdraw from Vault
+            Initialize Vault
         </Button>
     );
 };

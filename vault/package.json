@@ -2,7 +2,9 @@
     "license": "MIT",
     "scripts": {
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-        "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
+        "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+        "sync-page": "cp target/types/vault.ts ../test-page/src/idl/vault.ts && sed -i \"s|export const DEFAULT_VAULT_PROGRAM_ADDRESS = '.*';|export const DEFAULT_VAULT_PROGRAM_ADDRESS = '$(grep -oP '(?<=vault = \")[^\"]*' Anchor.toml)';|\" ../test-page/src/components/common.tsx",
+        "deploy": "anchor build && anchor deploy && anchor keys sync && yarn sync-page"
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.29.0",
