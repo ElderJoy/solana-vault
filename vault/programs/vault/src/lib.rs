@@ -1,5 +1,9 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::AssociatedToken, token::{self, Mint, Token, TokenAccount, Transfer}};
+
+mod instructions;
+mod state;
+
+use instructions::*;
 
 declare_id!("9RhmwHNcLztgcJLHJFU4A3fMsFQMnVwwvnkhxdJQUAEa");
 
@@ -8,193 +12,22 @@ pub mod vault {
     use super::*;
     
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        msg!("Instruction: Initialize");
-
-        let vault_deposit_authority = &mut ctx.accounts.vault_deposit_authority;
-        vault_deposit_authority.deposit_token = ctx.accounts.deposit_token.key();
-        vault_deposit_authority.bump = ctx.bumps.vault_deposit_authority;
-
-        Ok(())
+        initialize_handler(ctx)
     }
 
     pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
-        msg!("Instruction: Deposit: amount={}", amount);
-
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.user_deposit_wallet.to_account_info(),
-            to: ctx.accounts.vault_deposit_wallet.to_account_info(),
-            authority: ctx.accounts.user.to_account_info(),
-        };
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        token::transfer(cpi_ctx, amount)?;
-
-        let user_info = &mut ctx.accounts.user_info;
-
-        if user_info.user == Pubkey::default() {
-            // PDA just created, let's set the user field
-            msg!("PDA just created, setting user field");
-            user_info.user = ctx.accounts.user.key();
-        } else if user_info.user != ctx.accounts.user.key() {
-            return Err(ErrorCode::PdaBelongsToAnotherUser.into());
-        }
-        user_info.amount += amount;
-        msg!("User deposit balance: {}", user_info.amount);
-
-        Ok(())
+        deposit_handler(ctx, amount)
     }
 
     pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-        msg!("Instruction: Withdraw");
-
-        let user_info = &mut ctx.accounts.user_info;
-
-        if user_info.amount < amount {
-            return Err(ErrorCode::InsufficientFunds.into());
-        }
-
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.vault_deposit_wallet.to_account_info(),
-            to: ctx.accounts.user_deposit_wallet.to_account_info(),
-            authority: ctx.accounts.vault_deposit_authority.to_account_info(),
-        };
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        let deposit_token_key = ctx.accounts.deposit_token.key();
-
-        let vault_deposit_authority = &ctx.accounts.vault_deposit_authority;
-        let vault_deposit_authority_seeds = &[&b"vault_deposit_authority"[..], &deposit_token_key.as_ref(), &[vault_deposit_authority.bump]];
-        token::transfer(cpi_ctx.with_signer(&[&vault_deposit_authority_seeds[..]]), amount)?;
-
-        user_info.amount -= amount;
-        msg!("User deposit balance: {}", user_info.amount);
-
-        Ok(())
+        withdraw_handler(ctx, amount)
     }
 }
 
 #[error_code]
-pub enum ErrorCode {
+pub enum VaultError {
     #[msg("deposited fundc are insufficient")]
     InsufficientFunds,
     #[msg("pda belongs to another user")]
     PdaBelongsToAnotherUser,
-}
-
-#[derive(Accounts)]
-pub struct Initialize<'info> {
-    #[account()]
-    pub deposit_token: Account<'info, Mint>,
-
-    #[account(
-        init,
-        payer = user,
-        space = 8 + VaultDepositAuthority::LEN,
-        seeds = [b"vault_deposit_authority", deposit_token.key().as_ref()], bump
-    )]
-    pub vault_deposit_authority: Account<'info, VaultDepositAuthority>,
-
-    #[account(mut)]
-    pub user: Signer<'info>,
-
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct Deposit<'info> {
-    #[account(
-        init_if_needed,
-        payer = user,
-        space = 8 + UserInfo::LEN,
-        seeds = [user.key().as_ref()], bump
-    )]
-    pub user_info: Account<'info, UserInfo>,
-    
-    #[account(
-        mut,
-        associated_token::mint = deposit_token,
-        associated_token::authority = user
-    )]
-    pub user_deposit_wallet: Account<'info, TokenAccount>,
-
-    #[account(
-        seeds = [b"vault_deposit_authority", deposit_token.key().as_ref()],
-        bump = vault_deposit_authority.bump,
-        constraint = vault_deposit_authority.deposit_token == deposit_token.key()
-    )]
-    pub vault_deposit_authority: Account<'info, VaultDepositAuthority>,
-
-    #[account(
-        init_if_needed,
-        payer = user,
-        associated_token::mint = deposit_token,
-        associated_token::authority = vault_deposit_authority
-    )]
-    pub vault_deposit_wallet: Account<'info, TokenAccount>,
-
-    #[account()]
-    pub deposit_token: Account<'info, Mint>,
-
-    #[account(mut)]
-    pub user: Signer<'info>,
-
-    pub token_program: Program<'info, Token>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct Withdraw<'info> {
-    #[account()]
-    pub user: AccountInfo<'info>,
-    
-    #[account(mut, has_one = user)]
-    pub user_info: Account<'info, UserInfo>,
-    
-    #[account(
-        mut,
-        associated_token::mint = deposit_token,
-        associated_token::authority = user
-    )]
-    pub user_deposit_wallet: Account<'info, TokenAccount>,
-
-    #[account(
-        seeds = [b"vault_deposit_authority", deposit_token.key().as_ref()],
-        bump = vault_deposit_authority.bump,
-        constraint = vault_deposit_authority.deposit_token == deposit_token.key()
-    )]
-    pub vault_deposit_authority: Account<'info, VaultDepositAuthority>,
-
-    #[account(
-        mut,
-        associated_token::mint = deposit_token,
-        associated_token::authority = vault_deposit_authority
-    )]
-    pub vault_deposit_wallet: Account<'info, TokenAccount>,
-    
-    #[account()]
-    pub deposit_token: Account<'info, Mint>,
-
-    pub token_program: Program<'info, Token>,
-}
-
-#[account]
-pub struct UserInfo {
-    pub user: Pubkey,
-    pub amount: u64,
-}
-
-impl UserInfo {
-    pub const LEN: usize = 32 + 8;
-}
-
-#[account]
-pub struct VaultDepositAuthority {
-    pub deposit_token: Pubkey,
-    pub bump: u8,
-}
-
-impl VaultDepositAuthority {
-    pub const LEN: usize = 32 + 1;
 }
