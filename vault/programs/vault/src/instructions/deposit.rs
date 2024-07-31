@@ -1,10 +1,14 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    token::{Mint, Token, TokenAccount, Transfer, transfer}, 
-    associated_token::AssociatedToken
+    associated_token::AssociatedToken,
+    token::{transfer, Mint, Token, TokenAccount, Transfer},
 };
 
-use crate::{state::{UserInfo, VaultDepositAuthority}, VaultError};
+use crate::{
+    events::Deposited,
+    state::{UserInfo, VaultDepositAuthority},
+    VaultError, VAULT_DEPOSIT_AUTHORITY_SEED,
+};
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
@@ -15,7 +19,7 @@ pub struct Deposit<'info> {
         seeds = [user.key().as_ref()], bump
     )]
     pub user_info: Account<'info, UserInfo>,
-    
+
     #[account(
         mut,
         associated_token::mint = deposit_token,
@@ -24,7 +28,7 @@ pub struct Deposit<'info> {
     pub user_deposit_wallet: Account<'info, TokenAccount>,
 
     #[account(
-        seeds = [b"vault_deposit_authority", deposit_token.key().as_ref()],
+        seeds = [VAULT_DEPOSIT_AUTHORITY_SEED, deposit_token.key().as_ref()],
         bump = vault_deposit_authority.bump,
         constraint = vault_deposit_authority.deposit_token == deposit_token.key()
     )]
@@ -59,24 +63,31 @@ impl<'info> Deposit<'info> {
         let cpi_program = self.token_program.to_account_info();
         CpiContext::new(cpi_program, cpi_accounts)
     }
-}
 
-pub fn deposit_handler(ctx: Context<Deposit>, amount: u64) -> Result<()> {
-    msg!("Deposit: amount={}", amount);
+    pub fn apply(ctx: &mut Context<Deposit>, amount: u64) -> Result<()> {
+        require!(
+            ctx.accounts.user_info.user == Pubkey::default()
+                || ctx.accounts.user_info.user == ctx.accounts.user.key(),
+            VaultError::UserInfoBelongsToAnotherUser
+        );
 
-    transfer(ctx.accounts.transfer_token_ctx(), amount)?;
+        if ctx.accounts.user_info.user == Pubkey::default() {
+            msg!("PDA just created, setting user field");
+            ctx.accounts.user_info.user = ctx.accounts.user.key();
+        }
 
-    let user_info = &mut ctx.accounts.user_info;
+        msg!("Deposit: amount={}", amount);
 
-    if user_info.user == Pubkey::default() {
-        // PDA just created, let's set the user field
-        msg!("PDA just created, setting user field");
-        user_info.user = ctx.accounts.user.key();
-    } else if user_info.user != ctx.accounts.user.key() {
-        return Err(VaultError::PdaBelongsToAnotherUser.into());
+        transfer(ctx.accounts.transfer_token_ctx(), amount)?;
+
+        ctx.accounts.user_info.amount += amount;
+        msg!("User deposit balance: {}", ctx.accounts.user_info.amount);
+
+        emit!(Deposited {
+            user: *ctx.accounts.user.key,
+            amount,
+        });
+
+        Ok(())
     }
-    user_info.amount += amount;
-    msg!("User deposit balance: {}", user_info.amount);
-
-    Ok(())
 }

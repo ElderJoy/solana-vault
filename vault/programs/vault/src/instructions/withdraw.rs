@@ -1,16 +1,20 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token, TokenAccount, Transfer, transfer};
+use anchor_spl::token::{transfer, Mint, Token, TokenAccount, Transfer};
 
-use crate::{state::{UserInfo, VaultDepositAuthority}, VaultError};
+use crate::{
+    events::Withdrawn,
+    state::{UserInfo, VaultDepositAuthority},
+    VaultError, VAULT_DEPOSIT_AUTHORITY_SEED,
+};
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
     #[account()]
     pub user: AccountInfo<'info>,
-    
+
     #[account(mut, has_one = user)]
     pub user_info: Account<'info, UserInfo>,
-    
+
     #[account(
         mut,
         associated_token::mint = deposit_token,
@@ -19,7 +23,7 @@ pub struct Withdraw<'info> {
     pub user_deposit_wallet: Account<'info, TokenAccount>,
 
     #[account(
-        seeds = [b"vault_deposit_authority", deposit_token.key().as_ref()],
+        seeds = [VAULT_DEPOSIT_AUTHORITY_SEED, deposit_token.key().as_ref()],
         bump = vault_deposit_authority.bump,
         constraint = vault_deposit_authority.deposit_token == deposit_token.key()
     )]
@@ -31,37 +35,52 @@ pub struct Withdraw<'info> {
         associated_token::authority = vault_deposit_authority
     )]
     pub vault_deposit_wallet: Account<'info, TokenAccount>,
-    
+
     #[account()]
     pub deposit_token: Account<'info, Mint>,
 
     pub token_program: Program<'info, Token>,
 }
 
-pub fn withdraw_handler(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
-    msg!("Withdraw amount: {}", amount);
-
-    let user_info = &mut ctx.accounts.user_info;
-
-    if user_info.amount < amount {
-        return Err(VaultError::InsufficientFunds.into());
+impl<'info> Withdraw<'info> {
+    fn transfer_token_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+        let cpi_accounts = Transfer {
+            from: self.vault_deposit_wallet.to_account_info(),
+            to: self.user_deposit_wallet.to_account_info(),
+            authority: self.vault_deposit_authority.to_account_info(),
+        };
+        let cpi_program = self.token_program.to_account_info();
+        CpiContext::new(cpi_program, cpi_accounts)
     }
 
-    let cpi_accounts = Transfer {
-        from: ctx.accounts.vault_deposit_wallet.to_account_info(),
-        to: ctx.accounts.user_deposit_wallet.to_account_info(),
-        authority: ctx.accounts.vault_deposit_authority.to_account_info(),
-    };
-    let cpi_program = ctx.accounts.token_program.to_account_info();
-    let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-    let deposit_token_key = ctx.accounts.deposit_token.key();
+    pub fn apply(ctx: &mut Context<Withdraw>, amount: u64) -> Result<()> {
+        require!(
+            ctx.accounts.user_info.amount >= amount,
+            VaultError::InsufficientFunds
+        );
 
-    let vault_deposit_authority = &ctx.accounts.vault_deposit_authority;
-    let vault_deposit_authority_seeds = &[&b"vault_deposit_authority"[..], &deposit_token_key.as_ref(), &[vault_deposit_authority.bump]];
-    transfer(cpi_ctx.with_signer(&[&vault_deposit_authority_seeds[..]]), amount)?;
+        let deposit_token_key = ctx.accounts.deposit_token.key();
+        let vault_deposit_authority_seeds = &[
+            VAULT_DEPOSIT_AUTHORITY_SEED,
+            deposit_token_key.as_ref(),
+            &[ctx.accounts.vault_deposit_authority.bump],
+        ];
 
-    user_info.amount -= amount;
-    msg!("User deposit balance: {}", user_info.amount);
+        transfer(
+            ctx.accounts
+                .transfer_token_ctx()
+                .with_signer(&[&vault_deposit_authority_seeds[..]]),
+            amount,
+        )?;
 
-    Ok(())
+        ctx.accounts.user_info.amount -= amount;
+        msg!("User deposit balance: {}", ctx.accounts.user_info.amount);
+
+        emit!(Withdrawn {
+            user: *ctx.accounts.user.key,
+            amount,
+        });
+
+        Ok(())
+    }
 }

@@ -160,10 +160,16 @@ export type Vault = {
         "fields": [
           {
             "name": "depositToken",
+            "docs": [
+              "The token account, users can deposit into (USDC by default)"
+            ],
             "type": "publicKey"
           },
           {
             "name": "bump",
+            "docs": [
+              "Bump seed for the vault deposit authority PDA"
+            ],
             "type": "u8"
           }
         ]
@@ -346,10 +352,16 @@ export const IDL: Vault = {
         "fields": [
           {
             "name": "depositToken",
+            "docs": [
+              "The token account, users can deposit into (USDC by default)"
+            ],
             "type": "publicKey"
           },
           {
             "name": "bump",
+            "docs": [
+              "Bump seed for the vault deposit authority PDA"
+            ],
             "type": "u8"
           }
         ]

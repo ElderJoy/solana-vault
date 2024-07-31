@@ -26,7 +26,7 @@ export const InitializeButton: FC<CommonProps> = (props) => {
     const Initialize = useCallback(async () => {
         try {
             if (!publicKey || !wallet || !sendTransaction || !props.testUsdcTokenAddress || !props.vaultProgram) {
-                throw new Error('Wallet, testUsdcTokenAddress, vaultProgram, or adminAddress not available');
+                throw new Error('Wallet, publicKey, testUsdcTokenAddress, or vaultProgram not available');
             }
 
             const tokenPublicKey = new PublicKey(props.testUsdcTokenAddress);

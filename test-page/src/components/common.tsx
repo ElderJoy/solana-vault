@@ -53,7 +53,7 @@ export const getLedgerContractAddress = (): string => {
     return process.env.LEDGER_CONTRACT_ADDRESS ? process.env.LEDGER_CONTRACT_ADDRESS : defaultLedgerContractAddress;
 };
 
-export const DEFAULT_VAULT_PROGRAM_ADDRESS = '9RhmwHNcLztgcJLHJFU4A3fMsFQMnVwwvnkhxdJQUAEa';
+export const DEFAULT_VAULT_PROGRAM_ADDRESS = '4HkkMSFPcDargBgEXv2EuLRLmZp3HnGMscBxABzZ9deD';
 const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
 
 export const getVaultProgram = (vaultProgramAddress: string) => {

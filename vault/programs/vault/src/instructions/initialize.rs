@@ -1,13 +1,10 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    token::Mint, 
-    associated_token::AssociatedToken
-};
+use anchor_spl::{associated_token::AssociatedToken, token::Mint};
 
-use crate::state::VaultDepositAuthority;
+use crate::{state::VaultDepositAuthority, VAULT_DEPOSIT_AUTHORITY_SEED};
 
 #[derive(Accounts)]
-pub struct Initialize<'info> {
+pub struct InitVault<'info> {
     #[account()]
     pub deposit_token: Account<'info, Mint>,
 
@@ -15,7 +12,8 @@ pub struct Initialize<'info> {
         init,
         payer = user,
         space = 8 + VaultDepositAuthority::LEN,
-        seeds = [b"vault_deposit_authority", deposit_token.key().as_ref()], bump
+        seeds = [VAULT_DEPOSIT_AUTHORITY_SEED, deposit_token.key().as_ref()],
+        bump
     )]
     pub vault_deposit_authority: Account<'info, VaultDepositAuthority>,
 
@@ -26,10 +24,11 @@ pub struct Initialize<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn initialize_handler(ctx: Context<Initialize>) -> Result<()> {
-    let vault_deposit_authority = &mut ctx.accounts.vault_deposit_authority;
-    vault_deposit_authority.deposit_token = ctx.accounts.deposit_token.key();
-    vault_deposit_authority.bump = ctx.bumps.vault_deposit_authority;
+impl InitVault<'_> {
+    pub fn apply(ctx: &mut Context<InitVault>) -> Result<()> {
+        ctx.accounts.vault_deposit_authority.deposit_token = ctx.accounts.deposit_token.key();
+        ctx.accounts.vault_deposit_authority.bump = ctx.bumps.vault_deposit_authority;
 
-    Ok(())
+        Ok(())
+    }
 }

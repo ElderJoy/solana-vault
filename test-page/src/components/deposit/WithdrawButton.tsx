@@ -30,7 +30,7 @@ export const WithdrawButton: FC<CommonProps> = (props) => {
                 account = await getAccount(connection, associatedToken, 'confirmed');
             } catch (error: unknown) {
                 if (error instanceof TokenAccountNotFoundError || error instanceof TokenInvalidAccountOwnerError) {
-                    throw new Error('User token account not found');
+                    throw new Error('User token account should be created before depositing');
                 } else {
                     throw error;
                 }
