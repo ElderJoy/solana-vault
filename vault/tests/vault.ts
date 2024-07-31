@@ -1,6 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { BN, Program } from "@coral-xyz/anchor";
 import { Vault } from "../target/types/vault";
+import { OrderlyOapp } from "../target/types/orderly_oapp";
 import {
   Keypair,
   LAMPORTS_PER_SOL,
@@ -8,21 +9,22 @@ import {
 } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, createMint, createAssociatedTokenAccount, getAssociatedTokenAddressSync, mintTo, getAccount } from "@solana/spl-token";
 import { assert } from "chai";
+import { hexToBytes } from 'ethereum-cryptography/utils';
 
 describe("vault", () => {
   // Configure the client to use the local cluster.
   const provider = anchor.AnchorProvider.local();
   const connection = provider.connection;
+  const wallet = provider.wallet as anchor.Wallet
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.Vault as Program<Vault>;
-
-  const admin = Keypair.generate();
+  const vaultProgram = anchor.workspace.Vault as Program<Vault>;
+  const orderlyOappProgram = anchor.workspace.OrderlyOapp as Program<OrderlyOapp>;
 
   const user = Keypair.generate();
   const [pda] = PublicKey.findProgramAddressSync(
     [user.publicKey.toBuffer()],
-    program.programId
+    vaultProgram.programId
   );
 
   let token: PublicKey;
@@ -43,34 +45,23 @@ describe("vault", () => {
     }
     );
 
-    await connection.confirmTransaction({
-      blockhash: latestBlockHash.blockhash,
-      lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-      signature: await connection.requestAirdrop(
-        admin.publicKey,
-        10 * LAMPORTS_PER_SOL
-      )
-    }
-    );
-
     token = await createMint(
       connection,
-      admin,
-      admin.publicKey,
+      wallet.payer,
+      wallet.publicKey,
       null,
       6
     );
 
     [vaultDepositAuthority] = PublicKey.findProgramAddressSync(
       [Buffer.from("vault_deposit_authority"), token.toBuffer()],
-      program.programId
+      vaultProgram.programId
     );
 
     vaultTokenAccount = getAssociatedTokenAddressSync(token, vaultDepositAuthority, true);
-    userTokenAccount = await createAssociatedTokenAccount(connection, admin, token, user.publicKey);
-    await mintTo(connection, admin, token, userTokenAccount, admin, 1e10);
+    userTokenAccount = await createAssociatedTokenAccount(connection, wallet.payer, token, user.publicKey);
+    await mintTo(connection, wallet.payer, token, userTokenAccount, wallet.publicKey, 1e10);
 
-    // console.log("Admin address", admin.publicKey.toBase58());
     // console.log("User address", user.publicKey.toBase58());
     // console.log("Program ID", program.programId.toBase58());
     // console.log("PDA", pda.toBase58());
@@ -83,7 +74,7 @@ describe("vault", () => {
   });
 
   it("initialize", async () => {
-    const tx = await program.methods.initialize().accounts({
+    const tx = await vaultProgram.methods.initialize().accounts({
       depositToken: token,
       vaultDepositAuthority,
       user: user.publicKey,
@@ -91,7 +82,7 @@ describe("vault", () => {
     // console.log("Initialize transaction signature", tx);
 
     try {
-      await program.methods.initialize().accounts({
+      await vaultProgram.methods.initialize().accounts({
         depositToken: token,
         vaultDepositAuthority,
         user: user.publicKey,
@@ -105,7 +96,7 @@ describe("vault", () => {
     const userTokenAccountBefore = await getAccount(connection, userTokenAccount);
     assert.strictEqual(userTokenAccountBefore.amount.toString(), "10000000000");
 
-    const tx = await program.methods.deposit(new BN(5e9)).accounts({
+    const tx = await vaultProgram.methods.deposit(new BN(5e9)).accounts({
       userInfo: pda,
       userDepositWallet: userTokenAccount,
       vaultDepositAuthority: vaultDepositAuthority,
@@ -122,10 +113,10 @@ describe("vault", () => {
     const userTokenAccountAfter1 = await getAccount(connection, userTokenAccount);
     assert.strictEqual(userTokenAccountAfter1.amount.toString(), "5000000000");
 
-    const userInfoAfter1 = await program.account.userInfo.fetch(pda);
+    const userInfoAfter1 = await vaultProgram.account.userInfo.fetch(pda);
     assert.strictEqual(userInfoAfter1.amount.toNumber(), 5000000000);
 
-    const tx2 = await program.methods.deposit(new BN(5e9)).accounts({
+    const tx2 = await vaultProgram.methods.deposit(new BN(5e9)).accounts({
       userInfo: pda,
       userDepositWallet: userTokenAccount,
       vaultDepositAuthority: vaultDepositAuthority,
@@ -142,7 +133,7 @@ describe("vault", () => {
     const userTokenAccountAfter2 = await getAccount(connection, userTokenAccount);
     assert.strictEqual(userTokenAccountAfter2.amount.toString(), "0");
 
-    const userInfoAfter2 = await program.account.userInfo.fetch(pda);
+    const userInfoAfter2 = await vaultProgram.account.userInfo.fetch(pda);
     assert.strictEqual(userInfoAfter2.amount.toNumber(), 1e10);
   });
 
@@ -150,7 +141,7 @@ describe("vault", () => {
     const userTokenAccountBefore = await getAccount(connection, userTokenAccount);
     assert.strictEqual(userTokenAccountBefore.amount.toString(), "0");
 
-    const tx = await program.methods.withdraw(new BN(1e10)).accounts({
+    const tx = await vaultProgram.methods.withdraw(new BN(1e10)).accounts({
       user: user.publicKey,
       userInfo: pda,
       userDepositWallet: userTokenAccount,
@@ -167,7 +158,29 @@ describe("vault", () => {
     const userTokenAccountAfter = await getAccount(connection, userTokenAccount);
     assert.strictEqual(userTokenAccountAfter.amount.toString(), "10000000000");
 
-    const userInfoAfter = await program.account.userInfo.fetch(pda);
+    const userInfoAfter = await vaultProgram.account.userInfo.fetch(pda);
     assert.strictEqual(userInfoAfter.amount.toNumber(), 0);
+  });
+
+  it("call_oapp", async () => {
+    // OAPP Peer
+    const peerAddress = hexToBytes('0x42532863dcC16164B515C10eb2e46a3630A47762');
+    const dstEid: number = 40231;
+
+    it('oapp_send', async () => {
+      const tx = await vaultProgram.methods.callOapp({
+        dstEid: dstEid,
+        to: Array.from(peerAddress),
+        options: Buffer.from("fake options"),
+        message: Buffer.from("hello world"),
+        nativeFee: new BN(100_000_000),
+        lzTokenFee: new BN(0),
+      }).accounts({
+        signer: wallet.publicKey,
+        orderlyOappProgram: orderlyOappProgram.programId,
+      }).signers([wallet.payer]).rpc();
+
+      console.log("send oapp, tx", tx);
+    });
   });
 });

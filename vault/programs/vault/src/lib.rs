@@ -7,8 +7,9 @@ mod state;
 
 use errors::*;
 use instructions::*;
+use orderly_oapp::OAppSendParams;
 
-declare_id!("4HkkMSFPcDargBgEXv2EuLRLmZp3HnGMscBxABzZ9deD");
+declare_id!("BKXJXj9RkGuXWrFcQV7vFgvWnEc7ajD3yW7mvvaL3C7A");
 
 pub const VAULT_DEPOSIT_AUTHORITY_SEED: &[u8] = b"vault_deposit_authority";
 
@@ -26,5 +27,9 @@ pub mod vault {
 
     pub fn withdraw(mut ctx: Context<Withdraw>, amount: u64) -> Result<()> {
         Withdraw::apply(&mut ctx, amount)
+    }
+
+    pub fn call_oapp(mut ctx: Context<CallOapp>, params: OAppSendParams) -> Result<()> {
+        CallOapp::apply(&mut ctx, params)
     }
 }

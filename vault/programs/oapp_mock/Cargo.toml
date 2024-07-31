@@ -1,11 +1,11 @@
 [package]
-name = "oapp_mock"
+name = "orderly_oapp"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "oapp_mock"
+name = "orderly_oapp"
 
 [features]
 default = []
