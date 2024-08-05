@@ -29,7 +29,14 @@ pub mod vault {
         Withdraw::apply(&mut ctx, amount)
     }
 
-    pub fn call_oapp(mut ctx: Context<CallOapp>, params: OAppSendParams) -> Result<()> {
+    // pub fn call_oapp(mut ctx: Context<CallOapp>, params: OAppSendParams) -> Result<()> {
+    //     CallOapp::apply(&mut ctx, params)
+    // }
+
+    pub fn call_oapp<'info>(
+        mut ctx: Context<'_, '_, '_, 'info, CallOapp<'info>>,
+        params: OAppSendParams,
+    ) -> Result<()> {
         CallOapp::apply(&mut ctx, params)
     }
 }

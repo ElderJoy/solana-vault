@@ -1,9 +1,13 @@
 use anchor_lang::prelude::*;
 
+mod errors;
 mod instructions;
+pub mod state;
 
+use errors::*;
 pub use instructions::oapp_send::OAppSendParams;
 use instructions::*;
+use state::*;
 
 declare_id!("9qrP7gUnchdY9eJqKWAa7xYqj9ve6XGi7jkiCFtCtjW7");
 

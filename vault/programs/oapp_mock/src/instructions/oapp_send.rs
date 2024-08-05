@@ -4,6 +4,30 @@ use crate::*;
 #[instruction(params: OAppSendParams)]
 pub struct OAppSend<'info> {
     pub signer: Signer<'info>,
+    // #[account(
+    //     mut,
+    //     seeds = [
+    //         PEER_SEED,
+    //         &oapp_config.key().to_bytes(),
+    //         &params.dst_eid.to_be_bytes()
+    //     ],
+    //     bump = peer.bump
+    // )]
+    // pub peer: Account<'info, Peer>,
+    // #[account(
+    //     seeds = [
+    //         ENFORCED_OPTIONS_SEED,
+    //         &oapp_config.key().to_bytes(),
+    //         &params.dst_eid.to_be_bytes()
+    //     ],
+    //     bump = enforced_options.bump
+    // )]
+    // pub enforced_options: Account<'info, EnforcedOptions>,
+    // #[account(
+    //     seeds = [OAPP_SEED],
+    //     bump = oapp_config.bump
+    // )]
+    // pub oapp_config: Account<'info, OAppConfig>,
 }
 
 impl OAppSend<'_> {
